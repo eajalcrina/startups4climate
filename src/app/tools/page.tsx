@@ -30,7 +30,6 @@ import {
   Button,
   Card,
   ProgressRing,
-  MetricCard,
   SectionHeader,
   InsightBox,
   Chip,
@@ -517,8 +516,9 @@ export default function ToolsDashboard() {
           className="hero-stage"
           style={{
             padding: 'clamp(1.5rem, 3vw, 2.5rem)',
-            background: 'linear-gradient(135deg, rgba(218,78,36,0.08), rgba(31,119,246,0.06))',
-            border: '1px solid var(--color-border)',
+            background: 'rgba(14,14,14,0.75)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderTop: '2px solid rgba(218,78,36,0.6)',
           }}
         >
           {/* Orb decorativos firma */}
@@ -697,56 +697,84 @@ export default function ToolsDashboard() {
         </Card>
       </motion.section>
 
-      {/* ─── StatGrid of MetricCards ─── */}
+      {/* ─── Editorial KPI Strip ─── */}
       <motion.section
         {...springReveal}
         transition={{ type: 'spring', damping: 20, stiffness: 100, delay: 0.1 }}
         style={{ marginBottom: '2rem' }}
       >
         <div
-          className="metrics-grid"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-            gap: '1rem',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            borderTop: '1px solid rgba(255,255,255,0.07)',
+            borderBottom: '1px solid rgba(255,255,255,0.07)',
           }}
+          className="kpi-strip"
         >
-          <MetricCard
-            label="Herramientas"
-            value={totalCompleted}
-            unit={`/ ${total}`}
-            icon={Layers}
-            accent="primary"
-            size="md"
-            description="Completadas"
-          />
-          <MetricCard
-            label="Etapa actual"
-            value={userStageNum === 0 ? 'M00' : `E${userStageNum}`}
-            icon={CurrentStageIcon}
-            accent={
-              userStageNum === 0 ? 'success' : userStageNum === 2 ? 'success' : userStageNum === 3 ? 'warning' : userStageNum === 4 ? 'info' : 'primary'
-            }
-            size="md"
-            description={currentStageMeta.name}
-          />
-          <MetricCard
-            label="Diagnóstico"
-            value={diagnosticScore ?? '—'}
-            unit={diagnosticScore !== null ? '/100' : undefined}
-            icon={Award}
-            accent="info"
-            size="md"
-            description={diagnosticScore !== null ? 'Readiness score' : 'Sin diagnóstico'}
-          />
-          <MetricCard
-            label="Reportes"
-            value={reportsGeneratedCount}
-            icon={FileText}
-            accent="neutral"
-            size="md"
-            description="Generados"
-          />
+          {[
+            {
+              label: 'Herramientas completadas',
+              value: `${totalCompleted}`,
+              unit: `/ ${total}`,
+              sub: `${pct}% del roadmap`,
+            },
+            {
+              label: 'Etapa actual',
+              value: userStageNum === 0 ? 'M-00' : `E-0${userStageNum}`,
+              unit: '',
+              sub: currentStageMeta.name,
+            },
+            {
+              label: 'Startup Readiness',
+              value: diagnosticScore !== null ? `${diagnosticScore}` : '—',
+              unit: diagnosticScore !== null ? '/23' : '',
+              sub: diagnosticScore !== null ? 'Score de diagnóstico' : 'Sin diagnóstico',
+            },
+            {
+              label: 'Reportes generados',
+              value: `${reportsGeneratedCount}`,
+              unit: '',
+              sub: reportsGeneratedCount === 1 ? 'reporte ejecutivo' : 'reportes ejecutivos',
+            },
+          ].map((kpi, i) => (
+            <div
+              key={kpi.label}
+              style={{
+                padding: '1.25rem 1.5rem',
+                borderRight: i < 3 ? '1px solid rgba(255,255,255,0.07)' : 'none',
+              }}
+              className="kpi-strip-cell"
+            >
+              <span style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.55rem',
+                color: 'rgba(255,255,255,0.35)',
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                display: 'block',
+                marginBottom: '0.625rem',
+              }}>{kpi.label}</span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', marginBottom: '0.375rem' }}>
+                <span style={{
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: 'clamp(1.5rem, 2.5vw, 2rem)',
+                  fontWeight: 500,
+                  lineHeight: 1,
+                  letterSpacing: '-0.03em',
+                  color: '#ffffff',
+                }}>{kpi.value}</span>
+                {kpi.unit && (
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>{kpi.unit}</span>
+                )}
+              </div>
+              <span style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '0.7rem',
+                color: 'rgba(255,255,255,0.35)',
+              }}>{kpi.sub}</span>
+            </div>
+          ))}
         </div>
       </motion.section>
 
@@ -1508,9 +1536,19 @@ export default function ToolsDashboard() {
         .tools-dash-grid {
           grid-template-columns: repeat(3, 1fr);
         }
+        .kpi-strip {
+          border-radius: 0;
+        }
         @media (max-width: 1100px) {
-          .metrics-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          .kpi-strip {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+          .kpi-strip-cell:nth-child(2) {
+            border-right: none !important;
+          }
+          .kpi-strip-cell:nth-child(3) {
+            border-top: 1px solid rgba(255,255,255,0.07);
+            border-right: 1px solid rgba(255,255,255,0.07) !important;
           }
         }
         @media (max-width: 900px) {
@@ -1531,8 +1569,15 @@ export default function ToolsDashboard() {
           .tools-dash-grid {
             grid-template-columns: 1fr;
           }
-          .metrics-grid {
-            grid-template-columns: 1fr !important;
+          .kpi-strip {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+          .kpi-strip-cell {
+            border-right: none !important;
+            border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+          }
+          .kpi-strip-cell:last-child {
+            border-bottom: none !important;
           }
         }
       `}</style>

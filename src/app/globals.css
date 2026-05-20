@@ -46,6 +46,8 @@
 }
 
 :root {
+  --font-heading: 'Mluvka', 'General Sans', system-ui, sans-serif;
+  --font-body: 'Geist', 'General Sans', system-ui, sans-serif;
   /* ─── S4C v2 — "Forge × Climate" (inspirado en fusionai.framer.website) ─── */
 
   /* === BASES (negro absoluto + escalas oscuras) === */
@@ -361,9 +363,9 @@
 
 @theme inline {
   --font-heading: 'Mluvka', 'General Sans', system-ui, sans-serif;
-  --font-body: 'Mluvka', 'General Sans', system-ui, sans-serif;
+  --font-body: 'Geist', 'General Sans', system-ui, sans-serif;
   --font-display: 'Mluvka', 'General Sans', system-ui, sans-serif;
-  --font-sans: 'Mluvka', 'General Sans', system-ui, sans-serif;
+  --font-sans: 'Geist', 'General Sans', system-ui, sans-serif;
   --font-serif: 'Mluvka', Georgia, serif;
   --font-mono: 'JetBrains Mono', 'Geist Mono', ui-monospace, SFMono-Regular, monospace;
   --font-mluvka: 'Mluvka', 'General Sans', system-ui, sans-serif;
@@ -672,18 +674,18 @@
   position: absolute;
   width: 700px;
   height: 700px;
-  filter: blur(80px);
-  opacity: 0.55;
+  filter: blur(120px);
+  opacity: 0.22;
   mix-blend-mode: screen;
   pointer-events: none;
   z-index: 0;
-  animation: orb-float 12s ease-in-out infinite;
+  animation: orb-float 16s ease-in-out infinite;
 }
 .orb-ember { background: var(--grad-orb-ember); }
-.orb-electric { background: var(--grad-orb-electric); animation-delay: -6s; }
+.orb-electric { background: var(--grad-orb-electric); animation-delay: -8s; }
 
-.orb-sm { width: 420px; height: 420px; filter: blur(60px); opacity: 0.45; }
-.orb-lg { width: 900px; height: 900px; filter: blur(100px); opacity: 0.55; }
+.orb-sm { width: 360px; height: 360px; filter: blur(80px); opacity: 0.15; }
+.orb-lg { width: 800px; height: 800px; filter: blur(140px); opacity: 0.18; }
 
 @keyframes orb-float {
   0%, 100% { transform: translate(0, 0) scale(1); }

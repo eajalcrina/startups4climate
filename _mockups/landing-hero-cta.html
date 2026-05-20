@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S4C Landing — Hero + CTA Mockup (3 variantes)</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face {
+    font-family: 'Mluvka';
+    src: url('../public/mluvka/Mluvka-Regular-BF65518ac8463f5.otf') format('opentype');
+    font-weight: 400;
+  }
+  @font-face {
+    font-family: 'Mluvka';
+    src: url('../public/mluvka/Mluvka-Medium-BF65518ac864edb.otf') format('opentype');
+    font-weight: 500;
+  }
+  @font-face {
+    font-family: 'Mluvka';
+    src: url('../public/mluvka/Mluvka-SemiBold-BF65518ac864155.otf') format('opentype');
+    font-weight: 600;
+  }
+  @font-face {
+    font-family: 'Mluvka';
+    src: url('../public/mluvka/Mluvka-Bold-BF65518ac8cff8c.otf') format('opentype');
+    font-weight: 700;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #000000;
+    --card: #0E0E0E;
+    --elevated: #191919;
+    --ember-300: #F0721D;
+    --ember-500: #DA4E24;
+    --ember-600: #A22904;
+    --electric-500: #1F77F6;
+    --electric-300: #5BB4FF;
+    --ink: #FFFFFF;
+    --ink-secondary: rgba(255,255,255,0.72);
+    --ink-muted: rgba(255,255,255,0.50);
+    --border: rgba(255,255,255,0.06);
+    --border-strong: rgba(255,255,255,0.10);
+    --font-display: 'Mluvka', 'Geist', system-ui, sans-serif;
+    --font-body: 'Geist', system-ui, sans-serif;
+  }
+
+  body {
+    background: #080808;
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Variant selector ── */
+  .variant-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(0,0,0,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-strong);
+    padding: 12px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .variant-nav h4 {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .variant-nav button {
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--ink-secondary);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .variant-nav button:hover { border-color: var(--ember-500); color: var(--ink); }
+  .variant-nav button.active {
+    background: var(--ember-500);
+    border-color: var(--ember-500);
+    color: #fff;
+  }
+
+  /* ── Shared ── */
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .label-ember {
+    background: rgba(218,78,36,0.12);
+    border: 1px solid rgba(218,78,36,0.30);
+    color: var(--ember-300);
+  }
+  .label-electric {
+    background: rgba(31,119,246,0.12);
+    border: 1px solid rgba(31,119,246,0.30);
+    color: var(--electric-300);
+  }
+  .label-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .btn-ember {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    border-radius: 12px;
+    background: var(--ember-500);
+    color: #fff;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+    text-decoration: none;
+  }
+  .btn-ember:hover { background: var(--ember-300); }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--ink-secondary);
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 500;
+    border: 1px solid var(--border-strong);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.25); color: var(--ink); }
+
+  /* Orbs */
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+  }
+  .orb-ember { background: radial-gradient(circle, rgba(218,78,36,0.35), transparent 70%); }
+  .orb-electric { background: radial-gradient(circle, rgba(31,119,246,0.30), transparent 70%); }
+
+  /* Variant containers */
+  .variant { display: none; }
+  .variant.active { display: block; }
+
+  /* ── Separator ── */
+  .sep {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
+    margin: 0;
+  }
+
+  /* ── Chip tags ── */
+  .chip {
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border-strong);
+    font-size: 12px;
+    color: var(--ink-muted);
+    font-weight: 500;
+  }
+
+  /* ── Glass card ── */
+  .glass {
+    background: rgba(14,14,14,0.85);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 24px 48px -12px rgba(0,0,0,0.5);
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── Variant Selector ─── -->
+<nav class="variant-nav">
+  <h4>Variante</h4>
+  <button class="active" onclick="showVariant('a')">A · Concentrado</button>
+  <button onclick="showVariant('b')">B · Editorial</button>
+  <button onclick="showVariant('c')">C · Social proof</button>
+</nav>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- VARIANTE A — "Concentrado"                                              -->
+<!-- Hero compacto, claim fuerte, sin mockup. CTA directo.                  -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<div class="variant active" id="variant-a">
+
+  <!-- HERO A -->
+  <section style="
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    overflow: hidden;
+    padding: 120px 24px 80px;
+  ">
+    <div class="orb orb-ember" style="width:800px;height:800px;bottom:-400px;left:-300px;opacity:0.5"></div>
+    <div class="orb orb-electric" style="width:700px;height:700px;bottom:-350px;right:-250px;opacity:0.4"></div>
+
+    <div style="max-width:880px;text-align:center;position:relative;z-index:1">
+      <div class="section-label label-ember" style="margin-bottom:28px">
+        <span class="label-dot"></span> Plataforma gratuita para founders LATAM
+      </div>
+
+      <h1 style="
+        font-family: var(--font-display);
+        font-size: clamp(2.6rem, 6.5vw, 5rem);
+        font-weight: 700;
+        line-height: 1.02;
+        letter-spacing: -0.04em;
+        color: var(--ink);
+        margin-bottom: 24px;
+        text-wrap: balance;
+      ">
+        Construye tu startup de impacto con las herramientas que el ecosistema nunca te dio
+      </h1>
+
+      <p style="
+        font-size: clamp(1.05rem, 1.5vw, 1.25rem);
+        line-height: 1.6;
+        color: var(--ink-secondary);
+        max-width: 620px;
+        margin: 0 auto 36px;
+        text-wrap: pretty;
+      ">
+        +30 herramientas interactivas, mentor AI, RADAR del ecosistema y oportunidades de financiamiento. Sin costo. Sin aplicaciones. Sin esperas.
+      </p>
+
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:56px">
+        <a class="btn-ember" href="#">
+          Empezar gratis
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a class="btn-ghost" href="#">Para organizaciones</a>
+      </div>
+
+      <!-- Stats minimalistas -->
+      <div style="display:flex;justify-content:center;gap:clamp(2.5rem,6vw,5rem);flex-wrap:wrap">
+        <div style="text-align:center">
+          <div style="font-family:var(--font-display);font-size:clamp(2rem,4vw,3rem);font-weight:700;letter-spacing:-0.04em;background:linear-gradient(180deg,#fff 0%,var(--ember-300) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent">+30</div>
+          <div style="font-size:13px;color:var(--ink-muted);margin-top:4px;letter-spacing:0.02em">Herramientas</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-family:var(--font-display);font-size:clamp(2rem,4vw,3rem);font-weight:700;letter-spacing:-0.04em;background:linear-gradient(180deg,#fff 0%,var(--electric-300) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent">+10</div>
+          <div style="font-size:13px;color:var(--ink-muted);margin-top:4px;letter-spacing:0.02em">Universidades</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-family:var(--font-display);font-size:clamp(2rem,4vw,3rem);font-weight:700;letter-spacing:-0.04em;color:var(--ink)">100%</div>
+          <div style="font-size:13px;color:var(--ink-muted);margin-top:4px;letter-spacing:0.02em">Gratis para founders</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="sep"></div>
+
+  <!-- CTA A -->
+  <section style="
+    position: relative;
+    padding: clamp(5rem,10vw,9rem) 24px;
+    background: var(--bg);
+    overflow: hidden;
+  ">
+    <div class="orb orb-ember" style="width:600px;height:600px;top:-300px;left:-200px;opacity:0.4"></div>
+    <div class="orb orb-electric" style="width:500px;height:500px;bottom:-250px;right:-200px;opacity:0.3"></div>
+
+    <div class="glass" style="
+      max-width: 900px;
+      margin: 0 auto;
+      padding: clamp(3rem,7vw,5.5rem) clamp(2rem,5vw,4.5rem);
+      border-radius: 28px;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    ">
+      <h2 style="
+        font-family: var(--font-display);
+        font-size: clamp(2rem, 5vw, 3.2rem);
+        font-weight: 700;
+        line-height: 1.06;
+        letter-spacing: -0.035em;
+        margin-bottom: 20px;
+        text-wrap: balance;
+      ">
+        Tu idea puede cambiar la región.
+        <span style="color:var(--ember-500)"> Nosotros ponemos la infraestructura.</span>
+      </h2>
+      <p style="
+        font-size: clamp(1rem,1.3vw,1.15rem);
+        line-height: 1.6;
+        color: var(--ink-secondary);
+        max-width: 540px;
+        margin: 0 auto 32px;
+      ">
+        Crea tu cuenta en 30 segundos. Accede a herramientas, mentores AI y oportunidades desde cualquier país de LATAM.
+      </p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <a class="btn-ember" href="#">
+          Crear cuenta gratis
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a class="btn-ghost" href="#">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          Solicitar demo
+        </a>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- VARIANTE B — "Editorial"                                                -->
+<!-- Claim izquierda + visual derecha. CTA con textura.                     -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<div class="variant" id="variant-b">
+
+  <!-- HERO B -->
+  <section style="
+    position: relative;
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    background: var(--bg);
+    overflow: hidden;
+    padding: 100px 48px 80px;
+    gap: 64px;
+  ">
+    <div class="orb orb-ember" style="width:600px;height:600px;bottom:-200px;left:-200px;opacity:0.45"></div>
+
+    <!-- Left: copy -->
+    <div style="max-width:560px;position:relative;z-index:1">
+      <div class="section-label label-ember" style="margin-bottom:32px">
+        <span class="label-dot"></span> Para founders de impacto
+      </div>
+
+      <h1 style="
+        font-family: var(--font-display);
+        font-size: clamp(2.2rem, 4vw, 3.6rem);
+        font-weight: 700;
+        line-height: 1.05;
+        letter-spacing: -0.035em;
+        color: var(--ink);
+        margin-bottom: 24px;
+      ">
+        Las herramientas que el ecosistema LATAM siempre necesitó
+      </h1>
+
+      <p style="
+        font-size: 1.1rem;
+        line-height: 1.65;
+        color: var(--ink-secondary);
+        margin-bottom: 36px;
+      ">
+        Plataforma gratuita con +30 herramientas interactivas, mentores AI personalizados y mapeo en tiempo real de oportunidades. Diseñada para founders que quieren escalar su impacto.
+      </p>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:48px">
+        <a class="btn-ember" href="#">
+          Empezar gratis
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a class="btn-ghost" href="#">Para organizaciones</a>
+      </div>
+
+      <!-- Inline stats -->
+      <div style="display:flex;gap:32px">
+        <div>
+          <div style="font-family:var(--font-display);font-size:1.8rem;font-weight:700;letter-spacing:-0.03em;color:var(--ember-300)">+30</div>
+          <div style="font-size:12px;color:var(--ink-muted);margin-top:2px">herramientas</div>
+        </div>
+        <div style="width:1px;background:var(--border-strong)"></div>
+        <div>
+          <div style="font-family:var(--font-display);font-size:1.8rem;font-weight:700;letter-spacing:-0.03em;color:var(--electric-300)">+10</div>
+          <div style="font-size:12px;color:var(--ink-muted);margin-top:2px">universidades</div>
+        </div>
+        <div style="width:1px;background:var(--border-strong)"></div>
+        <div>
+          <div style="font-family:var(--font-display);font-size:1.8rem;font-weight:700;letter-spacing:-0.03em;color:var(--ink)">Gratis</div>
+          <div style="font-size:12px;color:var(--ink-muted);margin-top:2px">para founders</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: platform preview cards -->
+    <div style="position:relative;z-index:1">
+      <!-- Card stack simulando la plataforma -->
+      <div style="display:flex;flex-direction:column;gap:16px">
+
+        <!-- Mentor AI card -->
+        <div class="glass" style="padding:20px 24px;border-radius:16px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+            <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--ember-500),var(--ember-300));display:flex;align-items:center;justify-content:center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.09 3.26L16 7l-2.91.74L12 11l-1.09-3.26L8 7l2.91-.74L12 3z"/><path d="M18 13l.6 1.83 1.9.42-1.9.42L18 17.5l-.6-1.83-1.9-.42 1.9-.42L18 13z"/><path d="M6 17l.6 1.83 1.9.42-1.9.42L6 21.5l-.6-1.83-1.9-.42 1.9-.42L6 17z"/></svg>
+            </div>
+            <span style="font-size:13px;font-weight:600;color:var(--ink)">Mentor AI</span>
+            <span style="margin-left:auto;width:7px;height:7px;border-radius:50%;background:#10B981"></span>
+          </div>
+          <p style="font-size:14px;color:var(--ink-secondary);line-height:1.55;margin-bottom:12px">
+            Diseña mi modelo de revenue para vender créditos de carbono a empresas en Perú con margen 40%
+          </p>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span class="chip">Unit Economics</span>
+            <span class="chip">Revenue Model</span>
+            <span class="chip">Go-to-Market</span>
+          </div>
+        </div>
+
+        <!-- Diagnostic score card -->
+        <div class="glass" style="padding:20px 24px;border-radius:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <span style="font-size:13px;font-weight:600;color:var(--ink)">Startup Readiness</span>
+            <span style="font-size:12px;color:var(--ember-300);font-weight:600">Etapa 2 / 4</span>
+          </div>
+          <!-- Score bar -->
+          <div style="height:8px;border-radius:4px;background:var(--elevated);overflow:hidden;margin-bottom:10px">
+            <div style="height:100%;width:58%;border-radius:4px;background:linear-gradient(90deg,var(--ember-500),var(--ember-300))"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span style="font-size:11px;color:var(--ink-muted)">Idea validada</span>
+            <span style="font-size:11px;color:var(--ink-muted)">58/100</span>
+          </div>
+        </div>
+
+        <!-- RADAR mini card -->
+        <div class="glass" style="padding:20px 24px;border-radius:16px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,rgba(31,119,246,0.25),rgba(31,119,246,0.10));border:1px solid rgba(31,119,246,0.35);display:flex;align-items:center;justify-content:center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--electric-300)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4M12 18v4"/></svg>
+            </div>
+            <span style="font-size:13px;font-weight:600;color:var(--ink)">RADAR</span>
+          </div>
+          <div style="font-size:13px;color:var(--ink-secondary);line-height:1.5">
+            <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+              <span>Perú aprueba bonos verdes soberanos</span>
+              <span style="font-size:11px;color:var(--ember-300)">2h</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:6px 0">
+              <span>FONTAGRO abre convocatoria 2026</span>
+              <span style="font-size:11px;color:var(--electric-300)">5h</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="sep"></div>
+
+  <!-- CTA B -->
+  <section style="
+    position: relative;
+    padding: clamp(5rem,10vw,9rem) 48px;
+    background: var(--bg);
+    overflow: hidden;
+  ">
+    <div class="orb orb-ember" style="width:700px;height:700px;top:-350px;right:-200px;opacity:0.35"></div>
+
+    <div style="
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    ">
+      <div>
+        <h2 style="
+          font-family: var(--font-display);
+          font-size: clamp(2rem,4.5vw,3.2rem);
+          font-weight: 700;
+          line-height: 1.06;
+          letter-spacing: -0.035em;
+          margin-bottom: 20px;
+        ">
+          Tu startup merece infraestructura
+          <span style="color:var(--ember-500)"> de primer mundo</span>
+        </h2>
+        <p style="
+          font-size: 1.05rem;
+          line-height: 1.65;
+          color: var(--ink-secondary);
+          margin-bottom: 32px;
+        ">
+          No importa si estás en Lima, Bogotá o CDMX. Accede a las mismas herramientas que usan los mejores programas de innovación del mundo.
+        </p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <a class="btn-ember" href="#">
+            Crear cuenta gratis
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          <a class="btn-ghost" href="#">Solicitar demo</a>
+        </div>
+      </div>
+
+      <!-- Feature list -->
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <div style="display:flex;gap:16px;align-items:flex-start">
+          <div style="width:40px;height:40px;border-radius:10px;background:rgba(218,78,36,0.12);border:1px solid rgba(218,78,36,0.30);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ember-300)" stroke-width="2" stroke-linecap="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          </div>
+          <div>
+            <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:4px">+30 herramientas</div>
+            <div style="font-size:13px;color:var(--ink-muted);line-height:1.5">Lean Canvas, Modelo de Revenue, Pitch Deck, Análisis de Mercado y más</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;align-items:flex-start">
+          <div style="width:40px;height:40px;border-radius:10px;background:rgba(31,119,246,0.12);border:1px solid rgba(31,119,246,0.30);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--electric-300)" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.09 3.26L16 7l-2.91.74L12 11l-1.09-3.26L8 7l2.91-.74L12 3z"/><path d="M18 13l.6 1.83 1.9.42-1.9.42L18 17.5l-.6-1.83-1.9-.42 1.9-.42L18 13z"/></svg>
+          </div>
+          <div>
+            <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:4px">Mentor AI</div>
+            <div style="font-size:13px;color:var(--ink-muted);line-height:1.5">Retroalimentación personalizada por vertical, etapa y mercado</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;align-items:flex-start">
+          <div style="width:40px;height:40px;border-radius:10px;background:rgba(218,78,36,0.12);border:1px solid rgba(218,78,36,0.30);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ember-300)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4"/></svg>
+          </div>
+          <div>
+            <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:4px">RADAR + Oportunidades</div>
+            <div style="font-size:13px;color:var(--ink-muted);line-height:1.5">Grants, fondos y noticias curados para tu vertical</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- VARIANTE C — "Social proof"                                             -->
+<!-- Hero con logos de universidades + testimonio. CTA con urgencia.         -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<div class="variant" id="variant-c">
+
+  <!-- HERO C -->
+  <section style="
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    overflow: hidden;
+    padding: 120px 24px 80px;
+    text-align: center;
+  ">
+    <div class="orb orb-ember" style="width:900px;height:900px;top:-450px;left:50%;transform:translateX(-50%);opacity:0.25"></div>
+
+    <div style="max-width:940px;position:relative;z-index:1">
+
+      <!-- University logos bar -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:24px;margin-bottom:40px;opacity:0.6">
+        <span style="font-size:11px;color:var(--ink-muted);letter-spacing:0.06em;text-transform:uppercase;white-space:nowrap">Usado por</span>
+        <div style="width:1px;height:20px;background:var(--border-strong)"></div>
+        <div style="display:flex;gap:20px;align-items:center">
+          <img src="../public/unamad.jpeg" alt="UNAMAD" style="height:28px;border-radius:4px;filter:grayscale(1) brightness(2)">
+          <img src="../public/wiener.png" alt="Wiener" style="height:24px;filter:grayscale(1) brightness(2)">
+          <img src="../public/bioinnova.png" alt="BioInnova" style="height:24px;filter:grayscale(1) brightness(2)">
+        </div>
+      </div>
+
+      <h1 style="
+        font-family: var(--font-display);
+        font-size: clamp(2.6rem, 6.5vw, 4.8rem);
+        font-weight: 700;
+        line-height: 1.02;
+        letter-spacing: -0.04em;
+        color: var(--ink);
+        margin-bottom: 24px;
+        text-wrap: balance;
+      ">
+        Donde nacen las startups que van a transformar
+        <span style="background:linear-gradient(135deg,var(--ember-500),var(--ember-300));-webkit-background-clip:text;-webkit-text-fill-color:transparent"> el clima de LATAM</span>
+      </h1>
+
+      <p style="
+        font-size: clamp(1.05rem,1.5vw,1.2rem);
+        line-height: 1.6;
+        color: var(--ink-secondary);
+        max-width: 600px;
+        margin: 0 auto 40px;
+        text-wrap: pretty;
+      ">
+        La plataforma gratuita con herramientas interactivas, mentores AI y oportunidades que ya usan +10 universidades en la región.
+      </p>
+
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:64px">
+        <a class="btn-ember" href="#" style="padding:16px 32px;font-size:16px">
+          Empezar gratis
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a class="btn-ghost" href="#" style="padding:16px 32px;font-size:16px">Ver demo en vivo</a>
+      </div>
+
+      <!-- Testimonial card -->
+      <div class="glass" style="
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 28px 32px;
+        border-radius: 20px;
+        text-align: left;
+      ">
+        <p style="
+          font-size: 15px;
+          line-height: 1.65;
+          color: var(--ink-secondary);
+          font-style: italic;
+          margin-bottom: 16px;
+        ">
+          «Startups4Climate nos dio la infraestructura digital que necesitábamos para escalar nuestro programa de incubación de 15 a 80 startups en un semestre.»
+        </p>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--ember-500),var(--electric-500));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff">D</div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--ink)">Director de Innovación</div>
+            <div style="font-size:12px;color:var(--ink-muted)">Universidad aliada</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="sep"></div>
+
+  <!-- CTA C -->
+  <section style="
+    position: relative;
+    padding: clamp(5rem,10vw,9rem) 24px;
+    background: var(--bg);
+    overflow: hidden;
+  ">
+    <div class="orb orb-electric" style="width:600px;height:600px;bottom:-300px;left:50%;transform:translateX(-50%);opacity:0.3"></div>
+
+    <div style="max-width:760px;margin:0 auto;text-align:center;position:relative;z-index:1">
+
+      <!-- Urgency badge -->
+      <div style="
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        padding:8px 18px;
+        border-radius:999px;
+        background:rgba(218,78,36,0.10);
+        border:1px solid rgba(218,78,36,0.25);
+        margin-bottom:32px;
+        font-size:13px;
+        font-weight:600;
+        color:var(--ember-300);
+      ">
+        <span style="width:6px;height:6px;border-radius:50%;background:var(--ember-300);animation:pulse 2s infinite"></span>
+        Cohorte 2026-II abierta — cupos limitados
+      </div>
+
+      <h2 style="
+        font-family: var(--font-display);
+        font-size: clamp(2.2rem, 5vw, 3.6rem);
+        font-weight: 700;
+        line-height: 1.05;
+        letter-spacing: -0.035em;
+        margin-bottom: 20px;
+        text-wrap: balance;
+      ">
+        No necesitas estar en Silicon Valley para construir
+        <span style="color:var(--ember-500)"> algo que importa</span>
+      </h2>
+
+      <p style="
+        font-size: clamp(1rem,1.3vw,1.15rem);
+        line-height: 1.6;
+        color: var(--ink-secondary);
+        max-width: 540px;
+        margin: 0 auto 36px;
+      ">
+        Empieza hoy. Herramientas, mentores y comunidad. Todo lo que tu startup necesita para pasar de idea a tracción.
+      </p>
+
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:40px">
+        <a class="btn-ember" href="#" style="padding:16px 36px;font-size:16px">
+          Unirme gratis ahora
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <!-- Trust signals -->
+      <div style="display:flex;justify-content:center;gap:32px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ember-300)" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span style="font-size:13px;color:var(--ink-muted)">Datos encriptados</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--electric-300)" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span style="font-size:13px;color:var(--ink-muted)">100% gratuito</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ember-300)" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span style="font-size:13px;color:var(--ink-muted)">+200 founders</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<style>
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  @media (max-width: 768px) {
+    #variant-b section:first-child {
+      grid-template-columns: 1fr !important;
+      padding: 100px 24px 60px !important;
+    }
+    #variant-b section:last-of-type > div {
+      grid-template-columns: 1fr !important;
+    }
+  }
+</style>
+
+<script>
+function showVariant(id) {
+  document.querySelectorAll('.variant').forEach(v => v.classList.remove('active'));
+  document.getElementById('variant-' + id).classList.add('active');
+  document.querySelectorAll('.variant-nav button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+</script>
+
+</body>
+</html>

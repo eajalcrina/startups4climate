@@ -452,33 +452,33 @@ function mapToolByRevenueModel(modelo: string | undefined, etapa: number): strin
 /* ─── Styles ─── */
 const inputStyle = {
   width: '100%',
-  padding: '0.5rem 0 0.875rem',
+  padding: '0.625rem 0',
   borderRadius: 0,
   borderTop: 'none',
   borderRight: 'none',
   borderLeft: 'none',
-  borderBottom: '2px solid var(--color-border)',
+  borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
   fontFamily: 'var(--font-body)',
-  fontSize: 'var(--text-heading-md)',
+  fontSize: '0.95rem',
   color: 'var(--color-ink)',
   outline: 'none',
-  transition: 'border-color 0.2s',
+  transition: 'border-color 0.2s ease',
   background: 'transparent',
   letterSpacing: '-0.01em',
 } as const
 
 const labelStyle = {
   display: 'block',
-  fontFamily: 'var(--font-body)',
-  fontSize: '0.6rem',
-  fontWeight: 700,
-  color: 'var(--color-text-muted)',
+  fontFamily: 'var(--font-mono)',
+  fontSize: '0.65rem',
+  fontWeight: 600,
+  color: 'rgba(255, 255, 255, 0.45)',
   textTransform: 'uppercase' as const,
-  letterSpacing: '0.08em',
-  marginBottom: '0.125rem',
+  letterSpacing: '0.1em',
+  marginBottom: '0.375rem',
 } as const
 
-const rowStyle = { display: 'flex', gap: '0.75rem', flexWrap: 'wrap' as const }
+const rowStyle = { display: 'flex', gap: '1rem', flexWrap: 'wrap' as const }
 const halfColStyle = { flex: '1 1 220px', minWidth: 0 }
 
 const LOCAL_PROGRESS_KEY = 's4c_diagnostic_progress'
@@ -968,11 +968,14 @@ export default function DiagnosticForm({ embedded = false, userId = null, prefil
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-heading-lg)', fontWeight: 700, marginBottom: '0.375rem', color: 'var(--color-ink)', letterSpacing: '-0.03em' }}>
-                    Realiza tu diagnóstico
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 600, color: 'var(--color-accent-primary)', letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginBottom: '0.625rem' }}>
+                    [ DIAGNÓSTICO DE PREPARACIÓN ]
+                  </span>
+                  <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(1.35rem, 3vw, 1.75rem)', fontWeight: 500, marginBottom: '0.5rem', color: 'var(--color-ink)', letterSpacing: '-0.03em', lineHeight: 1.15 }}>
+                    Mide el estado real de tu startup
                   </h3>
-                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '1.25rem' }}>
-                    9 preguntas. 3 minutos. Recibirás tu Startup Readiness Score + roadmap de 30 días.
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginBottom: '1.5rem', lineHeight: 1.6, borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '1.25rem' }}>
+                    9 preguntas · 3 min · Startup Readiness Score + roadmap de 30 días personalizado.
                   </p>
                   <form onSubmit={handleSubmit(handleContactSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
                     <div style={rowStyle}>
@@ -1180,35 +1183,59 @@ export default function DiagnosticForm({ embedded = false, userId = null, prefil
                       {q.tooltip}
                     </p>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-                      {q.options.map(opt => {
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {q.options.map((opt, optIdx) => {
                         const selected = answers[q.id] === opt.value
                         const isWarned = activeWarning && activeWarning.qId === q.id && pendingAnswer?.value === opt.value
+                        const optionLabel = String.fromCharCode(65 + optIdx) // A, B, C, D…
                         return (
                           <div key={opt.value}>
                             <button
                               onClick={() => handleAnswer(qIndex, opt.value, opt.score, q.type, q.key)}
                               disabled={!!activeWarning && !isWarned}
                               style={{
-                                display: 'flex', alignItems: 'center', gap: '0.75rem',
-                                padding: '1.1rem 1.4rem',
-                                borderRadius: 'var(--radius-lg)',
-                                border: selected ? '2px solid var(--color-ink)' : '1.5px solid var(--color-border)',
-                                background: selected ? 'rgba(25,25,25,0.03)' : 'var(--color-paper)',
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: '1rem',
+                                padding: '0.875rem 1.25rem',
+                                borderRadius: 0,
+                                border: 'none',
+                                borderBottom: selected
+                                  ? '1px solid rgba(255,255,255,0.5)'
+                                  : '1px solid rgba(255,255,255,0.07)',
+                                background: selected ? 'rgba(255,255,255,0.03)' : 'transparent',
                                 cursor: activeWarning && !isWarned ? 'not-allowed' : 'pointer',
-                                textAlign: 'left', transition: 'all 0.2s var(--ease-smooth)',
-                                fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-lg)',
-                                fontWeight: 500, color: 'var(--color-ink)', width: '100%',
-                                opacity: activeWarning && !isWarned ? 0.55 : 1,
+                                textAlign: 'left',
+                                transition: 'all 0.18s ease',
+                                fontFamily: 'var(--font-body)',
+                                fontSize: '0.875rem',
+                                fontWeight: selected ? 500 : 400,
+                                color: selected ? '#ffffff' : 'rgba(255,255,255,0.55)',
+                                width: '100%',
+                                opacity: activeWarning && !isWarned ? 0.45 : 1,
                               }}
-                              onMouseEnter={(e) => { if (!selected && !activeWarning) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = 'var(--shadow-float)' } }}
-                              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+                              onMouseEnter={(e) => {
+                                if (!selected && !activeWarning) {
+                                  e.currentTarget.style.background = 'rgba(255,255,255,0.02)'
+                                  e.currentTarget.style.color = 'rgba(255,255,255,0.85)'
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = selected ? 'rgba(255,255,255,0.03)' : 'transparent'
+                                e.currentTarget.style.color = selected ? '#ffffff' : 'rgba(255,255,255,0.55)'
+                              }}
                             >
-                              <div style={{
-                                width: 20, height: 20, borderRadius: '50%',
-                                border: selected ? '6px solid var(--color-accent-primary)' : '2px solid var(--color-border)',
-                                flexShrink: 0, transition: 'border 0.2s var(--ease-smooth)',
-                              }} />
+                              <span style={{
+                                fontFamily: 'var(--font-mono)',
+                                fontSize: '0.65rem',
+                                fontWeight: 700,
+                                color: selected ? 'var(--color-accent-primary)' : 'rgba(255,255,255,0.25)',
+                                flexShrink: 0,
+                                marginTop: '0.125rem',
+                                letterSpacing: '0.05em',
+                                minWidth: 14,
+                                transition: 'color 0.18s ease',
+                              }}>{optionLabel}</span>
                               {opt.label}
                             </button>
 
@@ -1276,113 +1303,311 @@ export default function DiagnosticForm({ embedded = false, userId = null, prefil
               {step === 11 && (
                 <motion.div
                   key="results"
-                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  {/* BLOQUE 1 — Headline */}
-                  <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
-                    <div style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>{profile.emoji}</div>
-                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: profile.color, marginBottom: '0.375rem' }}>
-                      {profile.tag}
-                    </p>
-                    <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.35rem', fontWeight: 700, color: 'var(--color-ink)', marginBottom: '0.25rem', letterSpacing: '-0.03em' }}>
-                      Eres una startup en {profile.name}
-                    </h3>
-                    <div style={{ fontFamily: 'var(--font-body)', fontSize: '2.8rem', fontWeight: 700, color: profile.color, lineHeight: 1, margin: '0.75rem 0' }}>
-                      {countUp}<span style={{ fontSize: '1.2rem', color: 'var(--color-text-muted)' }}>/23</span>
-                    </div>
-                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.7rem', color: 'var(--color-text-muted)', marginTop: '-0.25rem' }}>
-                      Startup Readiness Score
-                    </p>
-                  </div>
+                  {/* Headline & Technical Metrics Grid */}
+                  <div style={{ marginBottom: '2.5rem' }}>
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.625rem',
+                        fontWeight: 600,
+                        color: 'var(--color-accent-primary)',
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        display: 'block',
+                        marginBottom: '0.75rem',
+                      }}
+                    >
+                      [ 03 / DIAGNÓSTICO ESTRATÉGICO ]
+                    </span>
+                    <h2
+                      style={{
+                        fontFamily: 'var(--font-heading)',
+                        fontSize: 'clamp(1.5rem, 3.5vw, 2.2rem)',
+                        fontWeight: 500,
+                        lineHeight: 1.1,
+                        letterSpacing: '-0.03em',
+                        margin: '0 0 1.5rem 0',
+                        color: '#ffffff',
+                      }}
+                    >
+                      Diagnóstico de <span className="text-ember">{answers.startup_name || 'tu Startup'}</span>
+                    </h2>
 
-                  {/* Stage progress bar */}
-                  <div style={{ margin: '0 0 1.5rem' }}>
-                    <div style={{ height: 8, borderRadius: 4, background: 'var(--color-border)', position: 'relative' }}>
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${((totalScore - 6) / (23 - 6)) * 100}%` }}
-                        transition={{ duration: 1, delay: 0.3 }}
-                        style={{ height: '100%', borderRadius: 4, background: profile.color }}
-                      />
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.375rem' }}>
-                      <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.65rem', color: 'var(--color-text-muted)' }}>Pre-incubación</span>
-                      <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.65rem', color: 'var(--color-text-muted)' }}>Incubación</span>
-                      <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.65rem', color: 'var(--color-text-muted)' }}>Aceleración</span>
-                      <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.65rem', color: 'var(--color-text-muted)' }}>Escalamiento</span>
-                    </div>
-                  </div>
-
-                  {/* Points to next + percentil */}
-                  <div style={{
-                    display: 'flex', flexWrap: 'wrap', gap: '0.75rem',
-                    marginBottom: '1.5rem',
-                  }}>
-                    {puntosFaltantes !== null && (
-                      <div style={{ flex: '1 1 200px', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', background: 'var(--color-bg-primary)', border: '1px solid var(--color-border)' }}>
-                        <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.65rem', fontWeight: 700, color: 'var(--color-text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Para la siguiente etapa</p>
-                        <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-ink)' }}>
-                          Te faltan <span style={{ color: profile.color, fontWeight: 800 }}>{puntosFaltantes}</span> puntos para alcanzar la Etapa {profile.etapa + 1}
-                        </p>
+                    {/* Technical KPI grid */}
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                      }}
+                      className="kpi-grid"
+                    >
+                      <div
+                        style={{
+                          padding: '1.25rem 1rem',
+                          borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+                        }}
+                        className="kpi-cell"
+                      >
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '0.55rem',
+                            color: 'rgba(255, 255, 255, 0.4)',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            display: 'block',
+                            marginBottom: '0.5rem',
+                          }}
+                        >
+                          Readiness Score
+                        </span>
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-heading)',
+                            fontSize: '2.2rem',
+                            fontWeight: 500,
+                            lineHeight: 1,
+                            color: profile.color,
+                          }}
+                        >
+                          {countUp}
+                          <span style={{ fontSize: '1rem', color: 'rgba(255, 255, 255, 0.3)', marginLeft: '0.25rem' }}>/23</span>
+                        </span>
                       </div>
-                    )}
-                    {percentil !== null && (
-                      <div style={{ flex: '1 1 200px', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', background: 'var(--color-bg-primary)', border: '1px solid var(--color-border)' }}>
-                        <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.65rem', fontWeight: 700, color: 'var(--color-text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Tu posición</p>
-                        <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-ink)' }}>
-                          Estás en el percentil <span style={{ color: profile.color, fontWeight: 800 }}>{percentil}</span> de startups que completaron este diagnóstico
-                        </p>
+                      <div
+                        style={{
+                          padding: '1.25rem 1rem',
+                          borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+                        }}
+                        className="kpi-cell"
+                      >
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '0.55rem',
+                            color: 'rgba(255, 255, 255, 0.4)',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            display: 'block',
+                            marginBottom: '0.5rem',
+                          }}
+                        >
+                          Fase Estratégica
+                        </span>
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-heading)',
+                            fontSize: '1.2rem',
+                            fontWeight: 500,
+                            color: '#ffffff',
+                            display: 'block',
+                            marginTop: '0.25rem',
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          {profile.name}
+                        </span>
                       </div>
-                    )}
+                      <div
+                        style={{
+                          padding: '1.25rem 1rem',
+                        }}
+                        className="kpi-cell no-border"
+                      >
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '0.55rem',
+                            color: 'rgba(255, 255, 255, 0.4)',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            display: 'block',
+                            marginBottom: '0.5rem',
+                          }}
+                        >
+                          Percentil Relativo
+                        </span>
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-heading)',
+                            fontSize: '2.2rem',
+                            fontWeight: 500,
+                            lineHeight: 1,
+                            color: '#ffffff',
+                          }}
+                        >
+                          {percentil}
+                          <span style={{ fontSize: '1rem', color: 'rgba(255, 255, 255, 0.3)', marginLeft: '0.1rem' }}>%</span>
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* BLOQUE 2 — Perfil de etapa */}
-                  <div style={{
-                    padding: '1.25rem',
-                    borderRadius: 'var(--radius-lg)',
-                    background: `${profile.color}08`,
-                    border: `1px solid ${profile.color}25`,
-                    marginBottom: '1.5rem',
-                  }}>
-                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.65rem', fontWeight: 700, color: profile.color, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-                      Tu etapa
-                    </p>
-                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', lineHeight: 1.7, color: 'var(--color-ink)' }}>
+                  {/* Discretionary Stage Visualizer */}
+                  <div style={{ marginBottom: '2.5rem' }}>
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.6rem',
+                        color: 'rgba(255, 255, 255, 0.4)',
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        display: 'block',
+                        marginBottom: '1rem',
+                      }}
+                    >
+                      [ PIPELINE DE PREPARACIÓN DE STARTUP ]
+                    </span>
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(4, 1fr)',
+                        gap: '0.75rem',
+                      }}
+                      className="stage-pipeline"
+                    >
+                      {[
+                        { name: 'Pre-incubación', step: 1 },
+                        { name: 'Incubación', step: 2 },
+                        { name: 'Aceleración', step: 3 },
+                        { name: 'Escalamiento', step: 4 },
+                      ].map((st) => {
+                        const isActive = profile.etapa === st.step
+                        const isPast = profile.etapa > st.step
+                        return (
+                          <div key={st.step}>
+                            <div
+                              style={{
+                                height: 5,
+                                background: isActive
+                                  ? profile.color
+                                  : isPast
+                                  ? 'rgba(255, 255, 255, 0.35)'
+                                  : 'rgba(255, 255, 255, 0.08)',
+                                borderRadius: 1,
+                                transition: 'all 0.3s ease',
+                                marginBottom: '0.5rem',
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontFamily: 'var(--font-body)',
+                                fontSize: '0.68rem',
+                                fontWeight: isActive ? 600 : 400,
+                                color: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.4)',
+                                display: 'block',
+                                textAlign: 'center',
+                              }}
+                            >
+                              {st.name} {isActive && '●'}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Stage Description Block */}
+                  <div
+                    style={{
+                      padding: '1.25rem 1.5rem',
+                      background: 'rgba(255, 255, 255, 0.015)',
+                      border: '1px solid rgba(255, 255, 255, 0.06)',
+                      borderRadius: 'var(--radius-md)',
+                      marginBottom: '2.5rem',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.6rem',
+                        color: 'rgba(255, 255, 255, 0.4)',
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        display: 'block',
+                        marginBottom: '0.5rem',
+                      }}
+                    >
+                      [ CORE FINDINGS / SÍNTESIS DE LA ETAPA ]
+                    </span>
+                    <p
+                      style={{
+                        fontFamily: 'var(--font-body)',
+                        fontSize: '0.85rem',
+                        lineHeight: 1.6,
+                        color: 'var(--color-text-secondary)',
+                        margin: 0,
+                      }}
+                    >
                       {profile.description}
                     </p>
+                    {puntosFaltantes !== null && (
+                      <p
+                        style={{
+                          fontFamily: 'var(--font-body)',
+                          fontSize: '0.78rem',
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          marginTop: '0.75rem',
+                          borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+                          paddingTop: '0.75rem',
+                          margin: '0.75rem 0 0 0',
+                        }}
+                      >
+                        Faltan <span style={{ color: profile.color, fontWeight: 700 }}>{puntosFaltantes}</span> puntos de madurez técnica para calificar al siguiente nivel estratégico ({profile.etapa === 1 ? 'Incubación' : profile.etapa === 2 ? 'Aceleración' : 'Escalamiento'}).
+                      </p>
+                    )}
                   </div>
 
-                  {/* BLOQUE 3 — Radar (barras) */}
-                  <div style={{
-                    padding: '1.25rem',
-                    borderRadius: 'var(--radius-lg)',
-                    background: 'var(--color-bg-primary)',
-                    border: '1px solid var(--color-border)',
-                    marginBottom: '1.5rem',
-                  }}>
-                    <h4 style={{ fontFamily: 'var(--font-heading)', fontSize: '0.85rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--color-ink)', letterSpacing: '-0.02em' }}>
-                      Tu perfil por dimensiones
-                    </h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {/* Core Dimensions Scores */}
+                  <div
+                    style={{
+                      padding: '1.25rem 1.5rem',
+                      background: 'rgba(255, 255, 255, 0.01)',
+                      border: '1px solid rgba(255, 255, 255, 0.06)',
+                      borderRadius: 'var(--radius-md)',
+                      marginBottom: '2.5rem',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.6rem',
+                        color: 'rgba(255, 255, 255, 0.4)',
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        display: 'block',
+                        marginBottom: '1rem',
+                      }}
+                    >
+                      [ DIMENSIONAL PROFILE ]
+                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                       {dimensions.map(d => {
                         const isStrength = fortalezas.find(f => f.key === d.key) !== undefined
                         const isGap = mejoras.find(m => m.key === d.key) !== undefined
-                        const barColor = isStrength ? '#1F77F6' : isGap ? '#F0721D' : profile.color
+                        const barColor = isStrength ? 'var(--color-accent-secondary)' : isGap ? 'var(--color-accent-primary)' : profile.color
                         return (
                           <div key={d.key}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                              <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.7rem', color: 'var(--color-ink)', fontWeight: 500 }}>{d.label}</span>
-                              <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.65rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, alignItems: 'center' }}>
+                              <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', color: '#ffffff', fontWeight: 500 }}>
+                                {d.label}
+                              </span>
+                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'rgba(255,255,255,0.45)' }}>
                                 {d.raw}/{d.max}
                               </span>
                             </div>
-                            <div style={{ height: 6, borderRadius: 3, background: 'var(--color-border)' }}>
+                            <div style={{ height: 4, borderRadius: 2, background: 'rgba(255, 255, 255, 0.06)', overflow: 'hidden' }}>
                               <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${d.normalized}%` }}
                                 transition={{ duration: 0.8, delay: 0.2 }}
-                                style={{ height: '100%', borderRadius: 3, background: barColor }}
+                                style={{ height: '100%', borderRadius: 2, background: barColor }}
                               />
                             </div>
                           </div>
@@ -1391,115 +1616,176 @@ export default function DiagnosticForm({ embedded = false, userId = null, prefil
                     </div>
                   </div>
 
-                  {/* BLOQUE 4 — Fortalezas y mejoras */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                    <div style={{
-                      padding: '1rem 1.25rem',
-                      borderRadius: 'var(--radius-lg)',
-                      background: 'rgba(31,119,246,0.06)',
-                      border: '1px solid rgba(31,119,246,0.25)',
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.5rem' }}>
-                        <Sparkles size={14} color="#1F77F6" />
-                        <h4 style={{ fontFamily: 'var(--font-heading)', fontSize: '0.75rem', fontWeight: 700, color: '#1F77F6', letterSpacing: '-0.01em' }}>
-                          Tus fortalezas
-                        </h4>
+                  {/* Fortalezas y Mejoras (2 Columns) */}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: '1.25rem',
+                      marginBottom: '2.5rem',
+                    }}
+                    className="results-grid"
+                  >
+                    {/* Strengths */}
+                    <div
+                      style={{
+                        padding: '1.25rem 1.5rem',
+                        background: 'rgba(31, 119, 246, 0.02)',
+                        border: '1px solid rgba(31, 119, 246, 0.15)',
+                        borderRadius: 'var(--radius-md)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.875rem' }}>
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '0.6rem',
+                            fontWeight: 600,
+                            color: '#5C9BFF',
+                            letterSpacing: '0.08em',
+                          }}
+                        >
+                          [ CORE STRENGTHS ]
+                        </span>
                       </div>
-                      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                         {fortalezas.map(f => {
                           const level = f.raw >= 3 ? 'high' : 'low'
                           return (
-                            <li key={f.key} style={{ fontFamily: 'var(--font-body)', fontSize: '0.75rem', lineHeight: 1.5, color: 'var(--color-ink)' }}>
-                              <strong>{f.label}:</strong> {DIM_MESSAGES[f.key][level]}
+                            <li key={f.key} style={{ fontFamily: 'var(--font-body)', fontSize: '0.75rem', lineHeight: 1.45, color: 'var(--color-text-secondary)' }}>
+                              <strong style={{ color: '#ffffff', fontWeight: 500 }}>{f.label}:</strong> {DIM_MESSAGES[f.key][level]}
                             </li>
                           )
                         })}
                       </ul>
                     </div>
 
-                    <div style={{
-                      padding: '1rem 1.25rem',
-                      borderRadius: 'var(--radius-lg)',
-                      background: 'rgba(240,114,29,0.06)',
-                      border: '1px solid rgba(240,114,29,0.25)',
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.5rem' }}>
-                        <Target size={14} color="#F0721D" />
-                        <h4 style={{ fontFamily: 'var(--font-heading)', fontSize: '0.75rem', fontWeight: 700, color: '#F0721D', letterSpacing: '-0.01em' }}>
-                          Áreas de mejora
-                        </h4>
+                    {/* Improvement Gaps */}
+                    <div
+                      style={{
+                        padding: '1.25rem 1.5rem',
+                        background: 'rgba(240, 114, 29, 0.02)',
+                        border: '1px solid rgba(240, 114, 29, 0.15)',
+                        borderRadius: 'var(--radius-md)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.875rem' }}>
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '0.6rem',
+                            fontWeight: 600,
+                            color: '#F0721D',
+                            letterSpacing: '0.08em',
+                          }}
+                        >
+                          [ IMPROVEMENT GAPS ]
+                        </span>
                       </div>
-                      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                         {mejoras.map(m => (
-                          <li key={m.key} style={{ fontFamily: 'var(--font-body)', fontSize: '0.75rem', lineHeight: 1.5, color: 'var(--color-ink)' }}>
-                            <strong>{m.label}:</strong> {DIM_MESSAGES[m.key].low}
+                          <li key={m.key} style={{ fontFamily: 'var(--font-body)', fontSize: '0.75rem', lineHeight: 1.45, color: 'var(--color-text-secondary)' }}>
+                            <strong style={{ color: '#ffffff', fontWeight: 500 }}>{m.label}:</strong> {DIM_MESSAGES[m.key].low}
                           </li>
                         ))}
                       </ul>
                       {tags.equipo_tamano && TEAM_NOTES[tags.equipo_tamano] && (
-                        <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.7rem', lineHeight: 1.5, color: 'var(--color-text-secondary)', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px dashed rgba(240,114,29,0.25)' }}>
-                          <strong>Nota sobre tu equipo:</strong> {TEAM_NOTES[tags.equipo_tamano]}
+                        <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.7rem', lineHeight: 1.4, color: 'rgba(255,255,255,0.4)', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px dashed rgba(240,114,29,0.15)' }}>
+                          <strong>Nota equipo:</strong> {TEAM_NOTES[tags.equipo_tamano]}
                         </p>
                       )}
                     </div>
                   </div>
 
-                  {/* BLOQUE 5 — Roadmap 30 días */}
-                  <div style={{
-                    padding: '1.25rem',
-                    borderRadius: 'var(--radius-lg)',
-                    background: 'var(--color-paper)',
-                    border: '1px solid var(--color-border)',
-                    marginBottom: '1.5rem',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.75rem' }}>
-                      <Wrench size={14} color="#DA4E24" />
-                      <h4 style={{ fontFamily: 'var(--font-heading)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-ink)', letterSpacing: '-0.02em' }}>
-                        Tu roadmap para los próximos 30 días
-                      </h4>
+                  {/* 30-Day Roadmap */}
+                  <div
+                    style={{
+                      padding: '1.25rem 1.5rem',
+                      background: 'rgba(255, 255, 255, 0.015)',
+                      border: '1px solid rgba(255, 255, 255, 0.06)',
+                      borderRadius: 'var(--radius-md)',
+                      marginBottom: '2.5rem',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '0.6rem',
+                          color: '#EAF0F6',
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        [ ACCIONES INMEDIATAS - SIGUIENTES 30 DÍAS ]
+                      </span>
                     </div>
-                    <ol style={{ paddingLeft: '1.25rem', margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <ol style={{ paddingLeft: '1.25rem', margin: 0, display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
                       {roadmap.bullets.map((b, i) => (
-                        <li key={i} style={{ fontFamily: 'var(--font-body)', fontSize: '0.75rem', lineHeight: 1.6, color: 'var(--color-ink)' }}>{b}</li>
+                        <li key={i} style={{ fontFamily: 'var(--font-body)', fontSize: '0.78rem', lineHeight: 1.55, color: 'var(--color-text-secondary)' }}>
+                          {b}
+                        </li>
                       ))}
                     </ol>
                   </div>
 
-                  {/* BLOQUE 6 — Herramientas recomendadas */}
-                  <div style={{
-                    padding: '1.25rem',
-                    borderRadius: 'var(--radius-lg)',
-                    background: 'var(--color-bg-primary)',
-                    border: '1px solid var(--color-border)',
-                    marginBottom: '1.5rem',
-                  }}>
-                    <h4 style={{ fontFamily: 'var(--font-heading)', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.875rem', color: 'var(--color-ink)', letterSpacing: '-0.02em' }}>
-                      Herramientas recomendadas para ti ahora mismo
-                    </h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+                  {/* Recommended Tools Grid */}
+                  <div
+                    style={{
+                      padding: '1.25rem 1.5rem',
+                      background: 'rgba(255, 255, 255, 0.01)',
+                      border: '1px solid rgba(255, 255, 255, 0.06)',
+                      borderRadius: 'var(--radius-md)',
+                      marginBottom: '2.5rem',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.6rem',
+                        color: 'rgba(255, 255, 255, 0.4)',
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        display: 'block',
+                        marginBottom: '1.25rem',
+                      }}
+                    >
+                      [ HERRAMIENTAS Y PLANTILLAS RECOMENDADAS ]
+                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                       {recommendedTools.map((tool, i) => {
                         const isAspirational = i === 2
                         return (
-                          <div key={tool + i} style={{
-                            padding: '0.875rem 1rem',
-                            borderRadius: 'var(--radius-md)',
-                            background: 'var(--color-paper)',
-                            border: '1px solid var(--color-border)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            gap: '0.75rem',
-                          }}>
+                          <div
+                            key={tool + i}
+                            style={{
+                              padding: '1rem 1.25rem',
+                              borderRadius: 'var(--radius-md)',
+                              background: 'rgba(255, 255, 255, 0.015)',
+                              border: '1px solid rgba(255, 255, 255, 0.05)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '1rem',
+                            }}
+                            className="tool-rec-card"
+                          >
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-ink)', marginBottom: 2 }}>
-                                {i + 1}. {tool} {isAspirational && <span style={{ fontSize: '0.6rem', fontWeight: 600, color: profile.color }}>⭐ Próxima etapa</span>}
+                              <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.85rem', fontWeight: 500, color: '#ffffff', margin: '0 0 0.25rem 0' }}>
+                                {i + 1}. {tool} {isAspirational && (
+                                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: profile.color, marginLeft: '0.5rem', border: `1px solid ${profile.color}40`, padding: '1px 5px', borderRadius: 2 }}>
+                                    HOJA DE RUTA
+                                  </span>
+                                )}
                               </p>
-                              <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.65rem', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
-                                {i === 0 && `Alineada a tu cuello de botella: ${tags.cuello_botella || 'tu etapa'}`}
-                                {i === 1 && `Alineada a tu modelo de ingresos: ${tags.modelo_negocio || 'tu etapa'}`}
-                                {i === 2 && `Para prepararte para la Etapa ${Math.min(profile.etapa + 1, 4)}`}
+                              <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.7rem', color: 'var(--color-text-secondary)', margin: 0, lineHeight: 1.4 }}>
+                                {i === 0 && `Alineado a tu cuello de botella prioritario: ${tags.cuello_botella || 'tu etapa'}`}
+                                {i === 1 && `Específica para tu modelo de negocio: ${tags.modelo_negocio || 'tu etapa'}`}
+                                {i === 2 && `Preparación recomendada para la siguiente etapa.`}
                               </p>
                             </div>
-                            <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.7rem', color: profile.color, fontWeight: 600, whiteSpace: 'nowrap' }}>
-                              Ver →
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: profile.color, fontWeight: 600, whiteSpace: 'nowrap' }}>
+                              VER RECURSO →
                             </span>
                           </div>
                         )
@@ -1507,46 +1793,45 @@ export default function DiagnosticForm({ embedded = false, userId = null, prefil
                     </div>
                   </div>
 
-                  {/* BLOQUE 7 — Inconsistencias (condicional) */}
+                  {/* Adaptive Warnings / Inconsistencias */}
                   {inconsistencies.length > 0 && (
                     <div style={{
-                      padding: '1.25rem',
-                      borderRadius: 'var(--radius-lg)',
-                      background: 'rgba(240,114,29,0.06)',
-                      border: '1px solid rgba(240,114,29,0.3)',
-                      marginBottom: '1.5rem',
+                      padding: '1.25rem 1.5rem',
+                      background: 'rgba(240, 114, 29, 0.015)',
+                      border: '1px solid rgba(240, 114, 29, 0.15)',
+                      borderRadius: 'var(--radius-md)',
+                      marginBottom: '2.5rem',
                     }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.5rem' }}>
-                        <AlertTriangle size={14} color="#F0721D" />
-                        <h4 style={{ fontFamily: 'var(--font-heading)', fontSize: '0.85rem', fontWeight: 700, color: '#F0721D', letterSpacing: '-0.02em' }}>
-                          Nota del diagnóstico
-                        </h4>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 600, color: '#F0721D', letterSpacing: '0.08em' }}>
+                          [ TENSIONES METODOLÓGICAS DETECTADAS ]
+                        </span>
                       </div>
-                      <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
-                        Detectamos algunas tensiones en tus respuestas que vale la pena explorar. Es más común de lo que parece y puede reflejar matices que un formulario no captura completamente.
+                      <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.72rem', color: 'var(--color-text-secondary)', marginBottom: '1rem', lineHeight: 1.5 }}>
+                        Tus respuestas presentan algunos contrastes que nuestro framework metodológico señala como inconsistencias. Te sugerimos revisar las siguientes áreas clave:
                       </p>
-                      <ul style={{ listStyle: 'disc', paddingLeft: '1.25rem', margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         {inconsistencies.map(id => (
-                          <li key={id} style={{ fontFamily: 'var(--font-body)', fontSize: '0.72rem', lineHeight: 1.55, color: 'var(--color-ink)' }}>
-                            {INC_MESSAGES[id]}
+                          <li key={id} style={{ fontFamily: 'var(--font-body)', fontSize: '0.75rem', lineHeight: 1.5, color: 'var(--color-text-secondary)', display: 'flex', gap: '0.5rem' }}>
+                            <span style={{ color: '#F0721D' }}>↳</span>
+                            <span>{INC_MESSAGES[id]}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
                   )}
 
-                  {/* BLOQUE 8 — CTAs */}
+                  {/* CTAs */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     {embedded && onBack && (
                       <button
                         onClick={onBack}
                         style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                          width: '100%', padding: '1rem', borderRadius: 'var(--radius-full)',
+                          width: '100%', padding: '0.875rem', borderRadius: 'var(--radius-full)',
                           background: 'var(--color-accent-primary)', color: '#fff',
-                          fontFamily: 'var(--font-body)', fontSize: '0.875rem', fontWeight: 700,
+                          fontFamily: 'var(--font-body)', fontSize: '0.85rem', fontWeight: 700,
                           border: 'none', cursor: 'pointer',
-                          boxShadow: '0 4px 16px rgba(218,78,36,0.25), 0 1px 2px rgba(0,0,0,0.4)',
                           letterSpacing: '-0.01em',
                         }}
                       >
@@ -1554,133 +1839,158 @@ export default function DiagnosticForm({ embedded = false, userId = null, prefil
                       </button>
                     )}
                     {!embedded && (
-                    <>
-                    {/* Primary CTA: si hay sesión → ir a /tools; si no → abrir registro */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (user) {
-                          router.push(`/tools?source=diagnostic&score=${totalScore}&etapa=${profile.etapa}`)
-                        } else {
-                          openAuthModal('register')
-                        }
-                      }}
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                        width: '100%', padding: '1rem', borderRadius: 'var(--radius-full)',
-                        background: 'var(--color-accent-primary)', color: '#fff',
-                        fontFamily: 'var(--font-body)', fontSize: '0.875rem', fontWeight: 700,
-                        border: 'none', cursor: 'pointer',
-                        boxShadow: '0 4px 16px rgba(218,78,36,0.25), 0 1px 2px rgba(0,0,0,0.4)',
-                        transition: 'background 0.2s, transform 0.2s var(--ease-spring)',
-                        letterSpacing: '-0.01em',
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-accent-hover)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-accent-primary)'; e.currentTarget.style.transform = 'translateY(0)' }}
-                    >
-                      {user ? 'Acceder a mis Herramientas' : 'Crear cuenta y desbloquear herramientas'} <ArrowRight size={18} />
-                    </button>
+                      <>
+                        {/* Primary CTA */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (user) {
+                              router.push(`/tools?source=diagnostic&score=${totalScore}&etapa=${profile.etapa}`)
+                            } else {
+                              openAuthModal('register')
+                            }
+                          }}
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                            width: '100%', padding: '0.875rem', borderRadius: 'var(--radius-full)',
+                            background: 'var(--color-accent-primary)', color: '#fff',
+                            fontFamily: 'var(--font-body)', fontSize: '0.85rem', fontWeight: 700,
+                            border: 'none', cursor: 'pointer',
+                            transition: 'background 0.2s, transform 0.2s var(--ease-spring)',
+                            letterSpacing: '-0.01em',
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-accent-hover)' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-accent-primary)' }}
+                        >
+                          {user ? 'Acceder a mis Herramientas' : 'Crear cuenta y desbloquear herramientas'} <ArrowRight size={18} />
+                        </button>
 
-                    {/* Secondary CTA: enviar resultados por email */}
-                    <button
-                      type="button"
-                      disabled={emailSendStatus === 'sending' || emailSendStatus === 'sent'}
-                      onClick={async () => {
-                        if (!answers.email) {
-                          setEmailSendError('No tenemos tu email para enviar los resultados.')
-                          setEmailSendStatus('error')
-                          return
-                        }
-                        setEmailSendStatus('sending')
-                        setEmailSendError(null)
-                        try {
-                          const res = await fetch('/api/diagnostic/email-results', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              email: (answers.email || '').toLowerCase(),
-                              nombre: answers.nombre,
-                              startup_name: answers.startup_name,
-                              total_score: totalScore,
-                              perfil_nombre: profile.name,
-                              perfil_etapa: profile.etapa,
-                              dimension_scores: scores,
-                              recommended_tools: recommendedTools,
-                              roadmap: roadmap.bullets,
-                              inconsistencias: inconsistencies.map(id => INC_MESSAGES[id]),
-                            }),
-                          })
-                          if (!res.ok) {
-                            const data = await res.json().catch(() => ({}))
-                            throw new Error(data.error || 'No se pudo enviar el email')
-                          }
-                          setEmailSendStatus('sent')
-                        } catch (err) {
-                          console.error('[S4C Sync] email-results client failed:', err)
-                          setEmailSendError(err instanceof Error ? err.message : 'Error desconocido')
-                          setEmailSendStatus('error')
-                        }
-                      }}
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                        width: '100%', padding: '0.9rem', borderRadius: 'var(--radius-full)',
-                        background: emailSendStatus === 'sent' ? 'rgba(31,119,246,0.08)' : 'transparent',
-                        border: `1.5px solid ${emailSendStatus === 'sent' ? '#1F77F6' : 'var(--color-ink)'}`,
-                        color: emailSendStatus === 'sent' ? '#1F77F6' : 'var(--color-ink)',
-                        fontFamily: 'var(--font-body)', fontSize: '0.8rem', fontWeight: 700,
-                        cursor: emailSendStatus === 'sending' || emailSendStatus === 'sent' ? 'default' : 'pointer',
-                        transition: 'all 0.2s var(--ease-smooth)',
-                        letterSpacing: '-0.01em',
-                        opacity: emailSendStatus === 'sending' ? 0.7 : 1,
-                      }}
-                    >
-                      {emailSendStatus === 'sending' && (<><Loader2 size={16} className="animate-spin" /> Enviando...</>)}
-                      {emailSendStatus === 'sent' && (<><CheckCircle2 size={16} /> Resultados enviados a tu email</>)}
-                      {(emailSendStatus === 'idle' || emailSendStatus === 'error') && (<><Mail size={16} /> Enviarme los resultados por email</>)}
-                    </button>
-                    {emailSendStatus === 'error' && emailSendError && (
-                      <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.7rem', color: '#DA4E24', textAlign: 'center', margin: 0 }}>
-                        {emailSendError}
-                      </p>
-                    )}
+                        {/* Secondary CTA */}
+                        <button
+                          type="button"
+                          disabled={emailSendStatus === 'sending' || emailSendStatus === 'sent'}
+                          onClick={async () => {
+                            if (!answers.email) {
+                              setEmailSendError('No tenemos tu email para enviar los resultados.')
+                              setEmailSendStatus('error')
+                              return
+                            }
+                            setEmailSendStatus('sending')
+                            setEmailSendError(null)
+                            try {
+                              const res = await fetch('/api/diagnostic/email-results', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  email: (answers.email || '').toLowerCase(),
+                                  nombre: answers.nombre,
+                                  startup_name: answers.startup_name,
+                                  total_score: totalScore,
+                                  perfil_nombre: profile.name,
+                                  perfil_etapa: profile.etapa,
+                                  dimension_scores: scores,
+                                  recommended_tools: recommendedTools,
+                                  roadmap: roadmap.bullets,
+                                  inconsistencias: inconsistencies.map(id => INC_MESSAGES[id]),
+                                }),
+                              })
+                              if (!res.ok) {
+                                const data = await res.json().catch(() => ({}))
+                                throw new Error(data.error || 'No se pudo enviar el email')
+                              }
+                              setEmailSendStatus('sent')
+                            } catch (err) {
+                              console.error('[S4C Sync] email-results client failed:', err)
+                              setEmailSendError(err instanceof Error ? err.message : 'Error desconocido')
+                              setEmailSendStatus('error')
+                            }
+                          }}
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                            width: '100%', padding: '0.875rem', borderRadius: 'var(--radius-full)',
+                            background: emailSendStatus === 'sent' ? 'rgba(31,119,246,0.08)' : 'transparent',
+                            border: `1px solid ${emailSendStatus === 'sent' ? '#1F77F6' : 'rgba(255,255,255,0.25)'}`,
+                            color: emailSendStatus === 'sent' ? '#1F77F6' : '#ffffff',
+                            fontFamily: 'var(--font-body)', fontSize: '0.8rem', fontWeight: 700,
+                            cursor: emailSendStatus === 'sending' || emailSendStatus === 'sent' ? 'default' : 'pointer',
+                            transition: 'all 0.2s var(--ease-smooth)',
+                            letterSpacing: '-0.01em',
+                            opacity: emailSendStatus === 'sending' ? 0.7 : 1,
+                          }}
+                          onMouseEnter={(e) => { if (emailSendStatus === 'idle') e.currentTarget.style.borderColor = '#ffffff' }}
+                          onMouseLeave={(e) => { if (emailSendStatus === 'idle') e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)' }}
+                        >
+                          {emailSendStatus === 'sending' && (<><Loader2 size={16} className="animate-spin" /> Enviando...</>)}
+                          {emailSendStatus === 'sent' && (<><CheckCircle2 size={16} /> Resultados enviados a tu email</>)}
+                          {(emailSendStatus === 'idle' || emailSendStatus === 'error') && (<><Mail size={16} /> Enviarme los resultados por email</>)}
+                        </button>
+                        {emailSendStatus === 'error' && emailSendError && (
+                          <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.7rem', color: '#DA4E24', textAlign: 'center', margin: 0 }}>
+                            {emailSendError}
+                          </p>
+                        )}
 
-                    {/* Tertiary CTA: sesión estratégica por WhatsApp */}
-                    <a
-                      href={`https://wa.me/51989338401?text=${encodeURIComponent(
-                        `Hola, soy ${answers.nombre || ''} de ${answers.startup_name || 'una startup de impacto'}. ` +
-                        `Acabo de completar el diagnóstico S4C (perfil: ${profile.name}, etapa ${profile.etapa}, score ${totalScore}). ` +
-                        `Quiero agendar una sesión estratégica con el equipo de Startups4Climate.`
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                        width: '100%', padding: '0.9rem', borderRadius: 'var(--radius-full)',
-                        background: 'transparent',
-                        border: '1.5px solid rgba(37,211,102,0.8)',
-                        color: '#25D366',
-                        fontFamily: 'var(--font-body)', fontSize: '0.8rem', fontWeight: 700,
-                        textDecoration: 'none',
-                        transition: 'all 0.2s var(--ease-smooth)',
-                        letterSpacing: '-0.01em',
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = '#25D366'; e.currentTarget.style.color = '#ffffff' }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#25D366' }}
-                    >
-                      <MessageCircle size={16} /> Agenda una sesión estratégica por WhatsApp
-                    </a>
-                    </>
+                        {/* WhatsApp CTA */}
+                        <a
+                          href={`https://wa.me/51989338401?text=${encodeURIComponent(
+                            `Hola, soy ${answers.nombre || ''} de ${answers.startup_name || 'una startup de impacto'}. ` +
+                            `Acabo de completar el diagnóstico S4C (perfil: ${profile.name}, etapa ${profile.etapa}, score ${totalScore}). ` +
+                            `Quiero agendar una sesión estratégica con el equipo de Startups4Climate.`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                            width: '100%', padding: '0.875rem', borderRadius: 'var(--radius-full)',
+                            background: 'transparent',
+                            border: '1.5px solid rgba(37,211,102,0.4)',
+                            color: '#25D366',
+                            fontFamily: 'var(--font-body)', fontSize: '0.8rem', fontWeight: 700,
+                            textDecoration: 'none',
+                            transition: 'all 0.2s var(--ease-smooth)',
+                            letterSpacing: '-0.01em',
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(37,211,102,0.1)' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                        >
+                          <MessageCircle size={16} /> Agenda una sesión estratégica por WhatsApp
+                        </a>
+                      </>
                     )}
                   </div>
 
                   {/* Confirmación de recibido */}
                   {!embedded && (
                     <div style={{ marginTop: '1.25rem', textAlign: 'center' }}>
-                      <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.65rem', color: 'var(--color-text-muted)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.65rem', color: 'var(--color-text-muted)', display: 'inline-flex', alignItems: 'center', gap: 6, margin: 0 }}>
                         <CheckCircle2 size={14} color="#1F77F6" /> Guardamos tu diagnóstico. Si te registras, podrás seguir tu evolución en el tiempo.
                       </p>
                     </div>
                   )}
+
+                  {/* Micro CSS styles for Step 11 responsiveness */}
+                  <style>{`
+                    @media (max-width: 600px) {
+                      .results-grid {
+                        grid-template-columns: 1fr !important;
+                        gap: 1rem !important;
+                      }
+                      .stage-pipeline {
+                        grid-template-columns: repeat(2, 1fr) !important;
+                        gap: 0.75rem !important;
+                      }
+                      .kpi-grid {
+                        grid-template-columns: 1fr !important;
+                      }
+                      .kpi-cell {
+                        border-right: none !important;
+                        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+                      }
+                      .kpi-cell.no-border {
+                        border-bottom: none !important;
+                      }
+                    }
+                  `}</style>
                 </motion.div>
               )}
             </AnimatePresence>
