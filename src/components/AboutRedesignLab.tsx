@@ -5,14 +5,14 @@ import Image from 'next/image'
 
 const founders = [
   {
-    photo: '/eddie.png',
+    photo: '/eddie.webp',
     name: 'Eddie Ajalcriña',
     role: 'Co-Founder & CEO',
     bio: 'Estrategia de impacto y desarrollo de negocio en LATAM. Experiencia en ecosistemas de innovación y conexión con capital.',
     tags: ['Impact Strategy', 'Business Dev', 'LATAM Ecosystems'],
   },
   {
-    photo: '/lorenzo.png',
+    photo: '/lorenzo.webp',
     name: 'Lorenzo Ortiz',
     role: 'Co-Founder & CTO',
     bio: 'Tecnología, producto y diseño de nuevos negocios. Background en finanzas avanzadas, desarrollo tech y escalamiento de startups.',
