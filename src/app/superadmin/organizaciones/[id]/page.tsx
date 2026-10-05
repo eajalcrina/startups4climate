@@ -124,7 +124,7 @@ export default function OrganizacionDetailPage() {
       .from('organizations')
       .select('*')
       .eq('id', orgId)
-      .single()
+      .maybeSingle()
 
     if (orgError || !orgData) {
       setLoading(false)

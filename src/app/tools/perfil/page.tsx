@@ -234,7 +234,7 @@ export default function PerfilPage() {
         if (typeof window !== 'undefined') {
           try {
             const extraKey = `s4c_${appUser.id}_profile_extra`
-            const extra = JSON.parse(localStorage.getItem(extraKey) || localStorage.getItem('s4c_profile_extra') || '{}')
+            const extra = JSON.parse(localStorage.getItem(extraKey) || '{}')
             if (extra.role) setRole(extra.role)
             if (extra.linkedin) setLinkedin(extra.linkedin)
             if (extra.descripcion) setDescripcion(extra.descripcion)
@@ -255,7 +255,7 @@ export default function PerfilPage() {
           .from('startups')
           .select('*')
           .eq('founder_id', appUser.id)
-          .single()
+          .maybeSingle()
 
         if (startup) {
           if (startup.name) setStartupName(startup.name)
@@ -270,8 +270,8 @@ export default function PerfilPage() {
           }
           if (typeof window !== 'undefined') {
             try {
-              const extraKey = appUser ? `s4c_${appUser.id}_profile_extra` : 's4c_profile_extra'
-              const extra = JSON.parse(localStorage.getItem(extraKey) || localStorage.getItem('s4c_profile_extra') || '{}')
+              const extraKey = `s4c_${appUser.id}_profile_extra`
+              const extra = JSON.parse(localStorage.getItem(extraKey) || '{}')
               if (extra.role) setRole(extra.role)
               if (extra.linkedin) setLinkedin(extra.linkedin)
               if (extra.phone) setPhone(extra.phone)
@@ -285,8 +285,8 @@ export default function PerfilPage() {
 
       if (typeof window !== 'undefined') {
         try {
-          const extraKey = appUser ? `s4c_${appUser.id}_profile_extra` : 's4c_profile_extra'
-          const extra = JSON.parse(localStorage.getItem(extraKey) || localStorage.getItem('s4c_profile_extra') || '{}')
+          const extraKey = `s4c_${appUser.id}_profile_extra`
+          const extra = JSON.parse(localStorage.getItem(extraKey) || '{}')
           if (extra.role) setRole(extra.role)
           if (extra.linkedin) setLinkedin(extra.linkedin)
           if (extra.descripcion) setDescripcion(extra.descripcion)
@@ -339,7 +339,7 @@ export default function PerfilPage() {
     await updateProfile({ full_name: nombre, startup_name: startupName, gender: gender || null })
 
     const extraData = { role, linkedin, descripcion, vertical, country, phone, website, teamSize, radarNewsletter, oppsNewsletter }
-    const extraKey = appUser ? `s4c_${appUser.id}_profile_extra` : 's4c_profile_extra'
+    const extraKey = `s4c_${appUser?.id ?? user.id}_profile_extra`
     localStorage.setItem(extraKey, JSON.stringify(extraData))
 
     if (appUser) {

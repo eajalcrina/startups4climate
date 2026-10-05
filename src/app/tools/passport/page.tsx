@@ -713,7 +713,6 @@ export default function PassportPage() {
     try {
       const extra = JSON.parse(
         localStorage.getItem(`s4c_${user.id}_profile_extra`) ||
-        localStorage.getItem('s4c_profile_extra') ||
         '{}'
       )
       const progress = getProgress(user.id)

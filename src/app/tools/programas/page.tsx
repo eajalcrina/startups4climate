@@ -88,7 +88,7 @@ export default function ProgramasPage() {
           .from('organizations')
           .select('name')
           .eq('id', appUser.org_id)
-          .single()
+          .maybeSingle()
         if (org?.name) setOrgName(org.name)
       }
     } catch {

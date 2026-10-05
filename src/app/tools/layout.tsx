@@ -342,7 +342,6 @@ function ToolsLayoutInner({ children }: { children: React.ReactNode }) {
       sessionStorage.setItem('s4c_profile_checked', '1')
       try {
         const extra = localStorage.getItem(`s4c_${user.id}_profile_extra`)
-          || localStorage.getItem('s4c_profile_extra') // legacy fallback
         if (!extra || extra === '{}') {
           router.replace('/tools/completar-perfil')
         }
@@ -356,7 +355,6 @@ function ToolsLayoutInner({ children }: { children: React.ReactNode }) {
     if (!user) return
     try {
       const extra = localStorage.getItem(`s4c_${user.id}_profile_extra`)
-        || localStorage.getItem('s4c_profile_extra') // legacy fallback
       if (!extra || extra === '{}') {
         setProfileIncomplete(true)
       } else {
@@ -376,7 +374,7 @@ function ToolsLayoutInner({ children }: { children: React.ReactNode }) {
         .from('organizations')
         .select('name')
         .eq('id', appUser.org_id)
-        .single()
+        .maybeSingle()
         .then(({ data }) => {
           if (data?.name) setOrgName(data.name)
         })

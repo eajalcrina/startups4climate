@@ -103,9 +103,11 @@ export function StartupProvider({ children }: { children: ReactNode }) {
         .from('startups')
         .select('*')
         .eq('founder_id', user.id)
-        .single()
+        .maybeSingle()
 
       if (error) throw error
+      // No startup row yet — use the same cache fallback as a failed query
+      if (!data) throw new Error('No startup row for founder')
 
       const profile: StartupProfile = {
         id: data.id,
