@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { skipUnlessDemoEnabled } from './helpers/demo';
 
 test.describe('Founder Tools Tests @demo', () => {
+  skipUnlessDemoEnabled();
+
   test.beforeEach(async ({ page }) => {
     // Navigate via demo entry to establish a founder session cookie
     await page.goto('/demo-tools');
@@ -21,10 +24,10 @@ test.describe('Founder Tools Tests @demo', () => {
 
   test('Oportunidades page loads content', async ({ page }) => {
     await page.goto('/tools/oportunidades');
-    // Check for the opportunities title
-    await expect(page.locator('text=Oportunidades').first()).toBeVisible();
-    // Check for filters
-    await expect(page.locator('text=Categoría').first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Oportunidades para tu startup' })).toBeVisible();
+    // Category and time filters
+    await expect(page.getByRole('button', { name: 'Grant', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Vigentes', exact: true })).toBeVisible();
   });
 
   test('Diagnóstico page loads', async ({ page }) => {

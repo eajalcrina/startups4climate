@@ -9,6 +9,17 @@ import { defineConfig, devices } from '@playwright/test';
  *   demo endpoint gate.
  * - E2E_SKIP_DEMO=1: skips specs tagged @demo (they rely on demo-mode data
  *   flows and are not stable without a real Supabase project).
+ * - NEXT_PUBLIC_DEMO_ENABLED: @demo specs enter through /demo-* and need demo
+ *   mode. `npm run dev` always has it; a production build only when
+ *   NEXT_PUBLIC_DEMO_ENABLED=true is set for `next build` (inlined into the
+ *   client bundle), for `npm start` and for Playwright itself. Without it,
+ *   @demo specs skip themselves under E2E_PROD=1 (e2e/helpers/demo.ts) and
+ *   e2e/prod-gates.spec.ts verifies the gate; with it, prod-gates skips.
+ *
+ * Typical production run (no real Supabase needed):
+ *   NEXT_PUBLIC_SUPABASE_URL=https://x.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=x npx next build
+ *   E2E_PROD=1 E2E_SKIP_DEMO=1 NEXT_PUBLIC_SUPABASE_URL=https://x.supabase.co \
+ *     NEXT_PUBLIC_SUPABASE_ANON_KEY=x npx playwright test
  * - PLAYWRIGHT_BASE_URL: point at an already-running server (no webServer).
  * - PLAYWRIGHT_CHROMIUM_EXECUTABLE: use a preinstalled Chromium binary instead
  *   of the one bundled with this Playwright version.

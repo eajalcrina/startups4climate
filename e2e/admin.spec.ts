@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { skipUnlessDemoEnabled } from './helpers/demo';
 
 test.describe('Admin Tools Tests @demo', () => {
+  skipUnlessDemoEnabled();
+
   test.beforeEach(async ({ page }) => {
     // Navigate via demo entry to establish an admin session cookie
     await page.goto('/demo-admin');
@@ -23,6 +26,8 @@ test.describe('Admin Tools Tests @demo', () => {
 });
 
 test.describe('Superadmin Tools Tests @demo', () => {
+  skipUnlessDemoEnabled();
+
   test.beforeEach(async ({ page }) => {
     // Navigate via demo entry to establish a superadmin session cookie
     await page.goto('/demo-superadmin');

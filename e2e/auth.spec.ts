@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { skipUnlessDemoEnabled } from './helpers/demo';
 
 test.describe('Authentication and Routing @demo', () => {
+  skipUnlessDemoEnabled();
+
   test('Demo Founder can access dashboard and it redirects from root', async ({ page }) => {
     // Navigate to demo-tools which sets the cookie
     await page.goto('/demo-tools');
