@@ -7,14 +7,7 @@ import { test, expect, type ConsoleMessage } from '@playwright/test';
  * application bugs).
  */
 const PUBLIC_PAGES: Array<{ path: string; knownIssue?: string }> = [
-  {
-    path: '/',
-    // BUG (src/components/Hero.tsx radar SVG): `dy="calc(... + 11px)"` is not a
-    // valid SVG length, and motion.polygon / motion.circle render without
-    // initial `points` / `cx` / `cy`, so the browser logs ~30 attribute errors
-    // per load. Remove once fixed.
-    knownIssue: 'Hero radar SVG logs invalid attribute errors (dy=calc(), cx/cy/points undefined)',
-  },
+  { path: '/' },
   { path: '/organizaciones' },
   { path: '/workbook' },
   { path: '/privacidad' },

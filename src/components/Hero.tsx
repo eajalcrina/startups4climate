@@ -170,7 +170,9 @@ function ReadinessRadar() {
               <stop offset="100%" stopColor="#1F77F6" stopOpacity="0.45" />
             </linearGradient>
           </defs>
+          {/* initial={false}: render the first frame with real points (no empty attr) */}
           <motion.polygon
+            initial={false}
             animate={{ points: points }}
             transition={{ duration: 1.2, ease: [0.25, 1, 0.5, 1] }}
             fill="url(#radarGrad)"
@@ -185,6 +187,7 @@ function ReadinessRadar() {
             return (
               <motion.circle
                 key={idx}
+                initial={false}
                 animate={{ cx: x, cy: y }}
                 transition={{ duration: 1.2, ease: [0.25, 1, 0.5, 1] }}
                 r="4.5"
@@ -224,10 +227,12 @@ function ReadinessRadar() {
                 >
                   {dim.name}
                 </text>
+                {/* SVG dy does not accept calc(). The former dy="calc(<offset> + 11px)"
+                    logged an error and rendered at the plain <offset>, so keep that. */}
                 <text
                   x={x}
                   y={y}
-                  dy={`calc(${dyOffset} + 11px)`}
+                  dy={dyOffset}
                   textAnchor={textAnchor}
                   fill="rgba(255,255,255,0.4)"
                   style={{
