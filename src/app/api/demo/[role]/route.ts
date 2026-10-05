@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { DEMO_COOKIE, isDemoEnabled, parseDemoRole, type DemoRole } from '@/lib/security/demo'
 
 /**
  * GET /api/demo/[role] — Sets the s4c_demo cookie and redirects to the
@@ -10,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
  *   admin_org  → /admin
  *   superadmin → /superadmin
  */
-const ROLE_TO_DESTINATION: Record<string, string> = {
+const ROLE_TO_DESTINATION: Record<DemoRole, string> = {
   founder: '/tools',
   admin_org: '/admin',
   superadmin: '/superadmin',
@@ -22,24 +23,22 @@ export async function GET(
 ) {
   // Production gate: demo cookie endpoints disabled unless explicitly enabled.
   // Prevents anonymous visitors from impersonating admin/superadmin in prod.
-  if (
-    process.env.NODE_ENV === 'production' &&
-    process.env.NEXT_PUBLIC_DEMO_ENABLED !== 'true'
-  ) {
+  // Shared with the proxy and /api/ai/chat via isDemoEnabled().
+  if (!isDemoEnabled()) {
     return new NextResponse('Not Found', { status: 404 })
   }
 
-  const { role } = await context.params
+  const role = parseDemoRole((await context.params).role)
 
-  if (!ROLE_TO_DESTINATION[role]) {
+  if (!role) {
     return NextResponse.redirect(new URL('/', _request.url))
   }
 
   const destination = ROLE_TO_DESTINATION[role]
   const response = NextResponse.redirect(new URL(destination, _request.url))
 
-  // 24h demo session via cookie that middleware + AuthContext both honor
-  response.cookies.set('s4c_demo', role, {
+  // 24h demo session via cookie that the proxy + AuthContext both honor
+  response.cookies.set(DEMO_COOKIE, role, {
     path: '/',
     maxAge: 86400,
     sameSite: 'lax',

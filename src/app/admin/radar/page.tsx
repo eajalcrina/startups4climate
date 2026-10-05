@@ -487,6 +487,8 @@ export default function AdminRadarPage() {
                   : 'Actualizando…'}
               </span>
             </div>
+            {/* Global AI refresh writes shared data: superadmin only (API enforces it too) */}
+            {appUser.role === 'superadmin' && (
             <button
               onClick={handleRefresh}
               disabled={refreshing}
@@ -509,6 +511,7 @@ export default function AdminRadarPage() {
               <RefreshCw size={13} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
               {refreshing ? 'Actualizando…' : 'Actualizar con IA'}
             </button>
+            )}
             {refreshResult && (
               <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontFamily: 'var(--font-body)' }}>
                 {refreshResult}

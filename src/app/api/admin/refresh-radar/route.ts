@@ -123,19 +123,21 @@ async function callGemini(prompt: string): Promise<string | null> {
 }
 
 export async function POST(_request: NextRequest) {
-  // Verify admin auth
+  // Auth: superadmin only — this writes global news_items with the service-role key
   const supabase = await createSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
-  if (!profile || !['admin_org', 'superadmin'].includes(profile.role ?? '')) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (profile?.role !== 'superadmin') {
+    console.error('[S4C Admin] refresh-radar denied for non-superadmin:', user.id, profile?.role ?? 'sin perfil')
+    return NextResponse.json({ error: 'Solo superadmin puede actualizar el radar' }, { status: 403 })
   }
 
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   if (!serviceKey || !supabaseUrl) {
+    console.error('[S4C Admin] refresh-radar: server env missing')
     return NextResponse.json({ error: 'Server config error' }, { status: 500 })
   }
   const adminDb = createClient(supabaseUrl, serviceKey, {

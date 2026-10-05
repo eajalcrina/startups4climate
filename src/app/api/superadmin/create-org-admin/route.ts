@@ -126,9 +126,22 @@ export async function POST(request: Request) {
     }
 
     /* ── 2. Upload logo (if provided) ── */
+    // Only the image types the UI offers (no HTML or arbitrary files) into the
+    // public bucket, max 2 MB; the extension comes from the validated MIME
+    // type, not the client filename.
     let logoUrl: string | null = null
+    const LOGO_TYPES: Record<string, string> = {
+      'image/png': 'png',
+      'image/jpeg': 'jpg',
+      'image/webp': 'webp',
+      'image/svg+xml': 'svg',
+    }
+    if (logoFile && (!LOGO_TYPES[logoFile.type] || logoFile.size > 2 * 1024 * 1024)) {
+      console.error('[S4C Admin] Logo rejected (type/size):', logoFile.type, logoFile.size)
+      logoFile = null
+    }
     if (logoFile) {
-      const ext = logoFile.name.split('.').pop()?.toLowerCase() || 'png'
+      const ext = LOGO_TYPES[logoFile.type]
       const storagePath = `org-logos/${org.id}/logo.${ext}`
       const buffer = Buffer.from(await logoFile.arrayBuffer())
 
@@ -167,7 +180,7 @@ export async function POST(request: Request) {
       // Rollback: delete the org and uploaded logo
       await adminClient.from('organizations').delete().eq('id', org.id)
       if (logoUrl) {
-        await adminClient.storage.from('logos').remove([`org-logos/${org.id}/logo.${logoFile?.name.split('.').pop() || 'png'}`])
+        await adminClient.storage.from('logos').remove([`org-logos/${org.id}/logo.${(logoFile && LOGO_TYPES[logoFile.type]) || 'png'}`])
       }
       console.error('[S4C Superadmin] Error creating auth user:', authError)
       return NextResponse.json(

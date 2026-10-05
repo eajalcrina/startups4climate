@@ -6,7 +6,12 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { resolveOpportunityUrl } from '@/lib/opportunities-url'
+import {
+  OPPORTUNITY_PROMPT_GUARD,
+  upsertOpportunities,
+  validateOpportunities,
+  type OpportunityValidationStats,
+} from '@/lib/opportunities-validate'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -43,10 +48,15 @@ export async function GET(request: NextRequest) {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 
-  const results = { inserted: 0, updated: 0, errors: [] as string[] }
+  const results: {
+    inserted: number
+    updated: number
+    errors: string[]
+    validation?: OpportunityValidationStats
+  } = { inserted: 0, updated: 0, errors: [] }
 
   const prompt = `Eres un investigador de oportunidades de financiamiento para startups de impacto en América Latina.
-Genera exactamente 5 oportunidades REALES y ACTUALES (2025-2026) para founders de startups de clima, agritech, fintech, healthtech y emprendimiento de impacto en LATAM.
+Genera hasta 5 oportunidades REALES y VIGENTES para founders de startups de clima, agritech, fintech, healthtech y emprendimiento de impacto en LATAM.
 
 Incluye una mezcla de: grants, programas de aceleración, fondos de inversión, competencias y convocatorias.
 
@@ -65,15 +75,17 @@ Cada objeto del array debe tener exactamente estas propiedades:
 - "eligible_stages": array de strings, valores: "idea", "pre_seed", "seed", "series_a", "growth"
 - "application_url": string, URL de la página de convocatoria o aplicación del programa (no solo la homepage). Ejemplos reales: 'https://www.startupchile.org/programs/', 'https://bidlab.org/calls', 'https://www.proinnovate.gob.pe/convocatorias', 'https://www.techstars.com/accelerators'. Si no conoces la URL exacta del programa, usa la homepage de la organización.
 - "is_rolling": boolean
-- "deadline": string ISO 8601 o null
+- "deadline": string ISO 8601 (fecha futura) o null
 
 REGLAS:
 - SOLO organizaciones REALES que operan en LATAM (BID Lab, CORFO, Start-Up Chile, Innpulsa, Wayra, Seedstars, 500 Global, Endeavor, Proinnovate, CONCYTEC, CAF, FONTAGRO, Google for Startups, Techstars, Y Combinator, etc.)
 - Montos realistas (grants: 5000-500000, accelerators: 20000-150000, funds: 100000-5000000)
 - Mezcla oportunidades regionales con específicas de país
 - NO repitas organización
-- Genera exactamente 5 objetos
-- Descripciones concretas de máximo 50 palabras: incluye monto, países elegibles, tipo de startup`
+- Genera como máximo 5 objetos
+- Descripciones concretas de máximo 50 palabras: incluye monto, países elegibles, tipo de startup
+
+${OPPORTUNITY_PROMPT_GUARD}`
 
   try {
     const aiRes = await fetch(
@@ -88,7 +100,8 @@ REGLAS:
           response_format: { type: 'json_object' },
           reasoning_effort: 'none',
         }),
-        signal: AbortSignal.timeout(55000),
+        // Leaves ~15s of the 60s budget for URL validation + DB writes.
+        signal: AbortSignal.timeout(40000),
       }
     )
 
@@ -110,21 +123,7 @@ REGLAS:
 
     const sanitized = sanitizeJsonString(jsonMatch[0])
 
-    let items: Array<{
-      title: string
-      organization: string
-      description: string
-      type: string
-      amount_min: number | null
-      amount_max: number | null
-      currency: string
-      eligible_countries: string[]
-      eligible_verticals: string[]
-      eligible_stages: string[]
-      application_url: string
-      is_rolling: boolean
-      deadline: string | null
-    }>
+    let items: unknown
 
     try {
       items = JSON.parse(sanitized)
@@ -134,67 +133,21 @@ REGLAS:
       return NextResponse.json({ ...results, _debug: sanitized.slice(Math.max(0, errPos - 100), errPos + 100), _pos: errPos, _totalLen: sanitized.length }, { status: 502 })
     }
 
-    const VALID_TYPES = ['grant', 'accelerator', 'competition', 'fund', 'fellowship']
-
-    for (const item of items) {
-      if (!item.title || !item.organization) continue
-      // Normalize type to valid enum
-      const itemType = VALID_TYPES.includes(item.type) ? item.type : 'fund'
-
-      const { data: existing } = await supabase
-        .from('opportunities')
-        .select('id')
-        .eq('title', item.title.slice(0, 500))
-        .eq('organization', item.organization)
-        .maybeSingle()
-
-      // Resolve URL to verified homepage
-      const verifiedUrl = resolveOpportunityUrl(item.organization, item.application_url ?? '')
-
-      if (existing) {
-        const { error } = await supabase
-          .from('opportunities')
-          .update({
-            description: item.description?.slice(0, 1000),
-            type: itemType,
-            amount_min: item.amount_min,
-            amount_max: item.amount_max,
-            currency: item.currency || 'USD',
-            eligible_countries: item.eligible_countries || [],
-            eligible_verticals: item.eligible_verticals || [],
-            eligible_stages: item.eligible_stages || [],
-            application_url: verifiedUrl,
-            is_rolling: item.is_rolling ?? false,
-            deadline: item.deadline,
-            is_active: true,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', existing.id)
-        if (error) results.errors.push(`Update ${item.title}: ${error.message}`)
-        else results.updated++
-      } else {
-        const { error } = await supabase
-          .from('opportunities')
-          .insert({
-            title: item.title.slice(0, 500),
-            organization: item.organization,
-            description: item.description?.slice(0, 1000),
-            type: itemType,
-            amount_min: item.amount_min,
-            amount_max: item.amount_max,
-            currency: item.currency || 'USD',
-            eligible_countries: item.eligible_countries || [],
-            eligible_verticals: item.eligible_verticals || [],
-            eligible_stages: item.eligible_stages || [],
-            application_url: verifiedUrl,
-            is_rolling: item.is_rolling ?? false,
-            deadline: item.deadline,
-            is_active: true,
-          })
-        if (error) results.errors.push(`Insert ${item.title}: ${error.message}`)
-        else results.inserted++
-      }
+    // Drop anything we cannot verify (non-https / unreachable URL, past
+    // deadline) before it reaches the table.
+    const { valid, stats } = await validateOpportunities(items, 'fund')
+    results.validation = stats
+    if (stats.kept < stats.received) {
+      console.error(
+        `[S4C AI] opportunities cron dropped ${stats.received - stats.kept}/${stats.received} items:`,
+        JSON.stringify(stats)
+      )
     }
+
+    const written = await upsertOpportunities(supabase, valid)
+    results.inserted = written.inserted
+    results.updated = written.updated
+    results.errors.push(...written.errors)
 
     // Deactivate opportunities with expired deadlines
     await supabase
@@ -208,7 +161,7 @@ REGLAS:
     results.errors.push(`Gemini: ${err instanceof Error ? err.message : 'unknown'}`)
   }
 
-  console.log('[S4C OPPORTUNITIES]', JSON.stringify(results))
+  console.log('[S4C AI] opportunities cron:', JSON.stringify(results))
 
   return NextResponse.json(results)
 }

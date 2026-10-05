@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
       cohort_id,
       startup_id: startup.id,
       founder_id: user.id,
-      message: message || null,
+      message: typeof message === 'string' && message.trim() ? message.trim().slice(0, 2000) : null,
       status: 'pending',
     })
     .select()
