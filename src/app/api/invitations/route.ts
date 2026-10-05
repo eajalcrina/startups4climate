@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase-server'
 import { Resend } from 'resend'
+import { escapeHtml, isValidEmail, sanitizeSubject } from '@/lib/security/html'
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://startups4climate.org'
-
-function escapeHtml(str: string): string {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-}
 
 export async function POST(request: NextRequest) {
   const supabase = await createSupabaseServer()
@@ -30,18 +27,35 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Sin permisos' }, { status: 403 })
   }
 
-  const body = await request.json()
-  const { email, cohort_id } = body
+  const body = (await request.json().catch(() => ({}))) as { email?: unknown; cohort_id?: unknown }
+  const email = typeof body.email === 'string' ? body.email.trim() : ''
+  const cohort_id = typeof body.cohort_id === 'string' && body.cohort_id ? body.cohort_id : null
 
-  if (!email || typeof email !== 'string') {
+  if (!email) {
     return NextResponse.json({ error: 'Email requerido' }, { status: 400 })
+  }
+  if (!isValidEmail(email)) {
+    return NextResponse.json({ error: 'Email inválido' }, { status: 400 })
+  }
+
+  // The cohort (if any) must belong to the admin's own organization
+  if (cohort_id) {
+    const { data: cohort } = await supabase
+      .from('cohorts')
+      .select('id')
+      .eq('id', cohort_id)
+      .eq('org_id', profile.org_id)
+      .maybeSingle()
+    if (!cohort) {
+      return NextResponse.json({ error: 'Cohorte no encontrada' }, { status: 404 })
+    }
   }
 
   // Check if invitation already exists
   const { data: existing } = await supabase
     .from('invitations')
     .select('id')
-    .eq('email', email.toLowerCase().trim())
+    .eq('email', email.toLowerCase())
     .eq('org_id', profile.org_id)
     .eq('status', 'pending')
     .maybeSingle()
@@ -55,8 +69,8 @@ export async function POST(request: NextRequest) {
     .from('invitations')
     .insert({
       org_id: profile.org_id,
-      cohort_id: cohort_id || null,
-      email: email.toLowerCase().trim(),
+      cohort_id,
+      email: email.toLowerCase(),
       invited_by: user.id,
     })
     .select('id, token')
@@ -81,10 +95,11 @@ export async function POST(request: NextRequest) {
   let emailSent = false
   try {
     if (!resend) throw new Error('RESEND_API_KEY not configured')
-    await resend.emails.send({
+    const inviterName = profile.full_name || 'Tu organización'
+    const { error: sendError } = await resend.emails.send({
       from: 'Startups4Climate <noreply@startups4climate.org>',
-      to: email.toLowerCase().trim(),
-      subject: `${escapeHtml(profile.full_name)} te invita a ${escapeHtml(orgName)} en Startups4Climate`,
+      to: [email.toLowerCase()],
+      subject: sanitizeSubject(`${inviterName} te invita a ${orgName} en Startups4Climate`),
       html: `
         <div style="font-family: 'Mluvka', Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px;">
           <div style="text-align: center; margin-bottom: 32px;">
@@ -94,7 +109,7 @@ export async function POST(request: NextRequest) {
           </div>
 
           <p style="font-size: 16px; color: #191919; margin: 0 0 16px;">
-            <strong>${escapeHtml(profile.full_name)}</strong> te ha invitado a unirte a
+            <strong>${escapeHtml(inviterName)}</strong> te ha invitado a unirte a
             <strong>${escapeHtml(orgName)}</strong> en Startups4Climate.
           </p>
 
@@ -104,7 +119,7 @@ export async function POST(request: NextRequest) {
           </p>
 
           <div style="text-align: center; margin: 32px 0;">
-            <a href="${inviteUrl}" style="
+            <a href="${escapeHtml(inviteUrl)}" style="
               display: inline-block; padding: 14px 32px;
               background: #DA4E24; color: #fff; font-size: 15px;
               font-weight: 600; text-decoration: none; border-radius: 8px;
@@ -120,9 +135,10 @@ export async function POST(request: NextRequest) {
         </div>
       `,
     })
+    if (sendError) throw new Error(sendError.message)
     emailSent = true
   } catch (err) {
-    console.error('[S4C Invite] email send failed:', err)
+    console.error('[S4C Admin] invitation email send failed:', err)
   }
 
   return NextResponse.json({

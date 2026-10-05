@@ -2,13 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { createSupabaseServer } from '@/lib/supabase-server'
+import { escapeHtml, sanitizeSubject } from '@/lib/security/html'
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://startups4climate.org'
-
-function escapeHtml(str: string): string {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-}
+const MAX_REVIEW_NOTE_LENGTH = 2000
 
 function formatDate(value: string | null | undefined): string | null {
   if (!value) return null
@@ -83,7 +81,8 @@ export async function PATCH(
 
   const body = await request.json()
   const status = body?.status
-  const reviewNoteRaw = typeof body?.review_note === 'string' ? body.review_note.trim() : ''
+  const reviewNoteRaw =
+    typeof body?.review_note === 'string' ? body.review_note.trim().slice(0, MAX_REVIEW_NOTE_LENGTH) : ''
   const reviewNote = reviewNoteRaw.length > 0 ? reviewNoteRaw : null
 
   if (!status || (status !== 'approved' && status !== 'rejected')) {
@@ -212,14 +211,14 @@ export async function PATCH(
           await resend.emails.send({
             from: 'Startups4Climate <noreply@startups4climate.org>',
             to: founderEmail,
-            subject: `¡Tu solicitud fue aprobada! Bienvenido a ${cohortName}`,
+            subject: sanitizeSubject(`¡Tu solicitud fue aprobada! Bienvenido a ${cohortName}`),
             html: approvalHtml(cohortName, formatDate(cohort?.start_date), formatDate(cohort?.end_date)),
           })
         } else {
           await resend.emails.send({
             from: 'Startups4Climate <noreply@startups4climate.org>',
             to: founderEmail,
-            subject: `Sobre tu solicitud para ${cohortName}`,
+            subject: sanitizeSubject(`Sobre tu solicitud para ${cohortName}`),
             html: rejectionHtml(cohortName, reviewNote),
           })
         }

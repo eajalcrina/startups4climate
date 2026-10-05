@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase-server'
 import { Resend } from 'resend'
+import { escapeHtml, isValidEmail, sanitizeSubject } from '@/lib/security/html'
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://startups4climate.org'
-
-function escapeHtml(str: string): string {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-}
 
 export async function POST(request: NextRequest) {
   const supabase = await createSupabaseServer()
@@ -35,6 +32,9 @@ export async function POST(request: NextRequest) {
 
   if (!email || typeof email !== 'string') {
     return NextResponse.json({ error: 'Email requerido' }, { status: 400 })
+  }
+  if (!isValidEmail(email.trim())) {
+    return NextResponse.json({ error: 'Email inválido' }, { status: 400 })
   }
 
   if (!org_id || typeof org_id !== 'string') {
@@ -94,10 +94,10 @@ export async function POST(request: NextRequest) {
   // Send email via Resend
   try {
     if (!resend) throw new Error('RESEND_API_KEY not configured')
-    await resend.emails.send({
+    const { error: sendError } = await resend.emails.send({
       from: 'Startups4Climate <noreply@startups4climate.org>',
-      to: email.toLowerCase().trim(),
-      subject: `Has sido invitado como administrador de ${escapeHtml(orgName)} en Startups4Climate`,
+      to: [email.toLowerCase().trim()],
+      subject: sanitizeSubject(`Has sido invitado como administrador de ${orgName} en Startups4Climate`),
       html: `
         <div style="font-family: 'Mluvka', Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px;">
           <div style="text-align: center; margin-bottom: 32px;">
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
           </p>
 
           <div style="text-align: center; margin: 32px 0;">
-            <a href="${inviteUrl}" style="
+            <a href="${escapeHtml(inviteUrl)}" style="
               display: inline-block; padding: 14px 32px;
               background: #DA4E24; color: #fff; font-size: 15px;
               font-weight: 600; text-decoration: none; border-radius: 8px;
@@ -133,9 +133,10 @@ export async function POST(request: NextRequest) {
         </div>
       `,
     })
-  } catch {
+    if (sendError) throw new Error(sendError.message)
+  } catch (err) {
     // Email failed but invitation was created — log but don't fail
-    console.error('[S4C Admin] failed to send org-admin invitation email')
+    console.error('[S4C Admin] failed to send org-admin invitation email:', err)
   }
 
   return NextResponse.json({ success: true, invitation })
