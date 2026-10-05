@@ -9,6 +9,8 @@ import {
   rateLimitHeaders,
   type RateLimitRole,
 } from '@/lib/rate-limit'
+import { DEMO_COOKIE, getActiveDemoRole } from '@/lib/security/demo'
+import { checkIpRateLimit, getClientIp } from '@/lib/security/ip-rate-limit'
 
 // Stream long mentor completions without hitting the Hobby plan's 10s
 // serverless timeout. Edge runtime keeps the response open for the full
@@ -35,7 +37,7 @@ function clampUserContext(ctx: Record<string, unknown>): Record<string, unknown>
         if (typeof toolVal === 'object' && toolVal !== null) {
           const trimmed: Record<string, unknown> = {}
           for (const [field, fv] of Object.entries(toolVal as Record<string, unknown>)) {
-            const str = typeof fv === 'string' ? fv : JSON.stringify(fv)
+            const str = typeof fv === 'string' ? fv : (JSON.stringify(fv) ?? '')
             trimmed[field] = str.length > MAX_VALUE_LEN ? str.slice(0, MAX_VALUE_LEN) + '…' : fv
           }
           clamped[toolId] = trimmed
@@ -44,6 +46,14 @@ function clampUserContext(ctx: Record<string, unknown>): Record<string, unknown>
       result[k] = clamped
     } else if (typeof v === 'string' && v.length > MAX_VALUE_LEN) {
       result[k] = v.slice(0, MAX_VALUE_LEN) + '…'
+    } else if (Array.isArray(v)) {
+      result[k] = v
+        .slice(0, MAX_ARRAY_ITEMS)
+        .map((item) =>
+          typeof item === 'string' && item.length > MAX_VALUE_LEN
+            ? item.slice(0, MAX_VALUE_LEN) + '…'
+            : item
+        )
     } else {
       result[k] = v
     }
@@ -51,35 +61,22 @@ function clampUserContext(ctx: Record<string, unknown>): Record<string, unknown>
   return result
 }
 
+const MAX_ARRAY_ITEMS = 50
+
+/** Accept only a plain object as userContext and clamp it (both demo and auth paths). */
+function safeContext(ctx: unknown): Record<string, unknown> | undefined {
+  if (typeof ctx !== 'object' || ctx === null || Array.isArray(ctx)) return undefined
+  return clampUserContext(ctx as Record<string, unknown>)
+}
+
 /**
- * In-memory IP rate limiter for the demo path. Prevents anonymous abuse of the
- * Gemini API since the demo cookie bypasses Supabase auth + per-user quotas.
- * 10 requests per minute per IP. Map persists per serverless instance — good
- * enough as a soft cap; for hard limits move to Vercel KV / Upstash later.
+ * IP rate limit for the demo path. Prevents anonymous abuse of the AI API
+ * since the demo cookie bypasses Supabase auth + per-user quotas.
+ * 10 requests per minute per IP, counted in the DB (check_ip_rate_limit RPC)
+ * so the cap holds across serverless instances.
  */
 const DEMO_RATE_LIMIT = 10
-const DEMO_WINDOW_MS = 60_000
-const demoIpHits = new Map<string, { count: number; resetAt: number }>()
-
-function checkDemoRateLimit(ip: string): { ok: boolean; retryAfter?: number } {
-  const now = Date.now()
-  const entry = demoIpHits.get(ip)
-  if (!entry || entry.resetAt < now) {
-    demoIpHits.set(ip, { count: 1, resetAt: now + DEMO_WINDOW_MS })
-    // Opportunistic cleanup to avoid unbounded growth
-    if (demoIpHits.size > 5000) {
-      for (const [k, v] of demoIpHits) {
-        if (v.resetAt < now) demoIpHits.delete(k)
-      }
-    }
-    return { ok: true }
-  }
-  if (entry.count >= DEMO_RATE_LIMIT) {
-    return { ok: false, retryAfter: Math.ceil((entry.resetAt - now) / 1000) }
-  }
-  entry.count += 1
-  return { ok: true }
-}
+const DEMO_WINDOW_SECONDS = 60
 
 const AGENT_PROMPTS: Record<string, string> = {
   mentor: MENTOR_GENERAL_PROMPT,
@@ -97,9 +94,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // ── Demo bypass: if s4c_demo cookie is set, skip Supabase auth ──
+    // ── Demo bypass: only when demo mode is enabled AND the cookie holds a
+    // known role. Any other value falls through to the authenticated path. ──
     const cookieStore = await cookies()
-    const demoCookie = cookieStore.get('s4c_demo')?.value
+    const demoRole = getActiveDemoRole(cookieStore.get(DEMO_COOKIE)?.value)
 
     const body = await request.json()
     const { message, agentType, conversationId, userContext, stream } = body as {
@@ -110,7 +108,7 @@ export async function POST(request: NextRequest) {
       stream?: boolean
     }
 
-    if (!message || !agentType) {
+    if (typeof message !== 'string' || !message || typeof agentType !== 'string' || !agentType) {
       return Response.json(
         { error: 'Faltan campos requeridos: message, agentType' },
         { status: 400 }
@@ -125,32 +123,29 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Demo path: build context entirely from client-sent userContext ──
-    if (demoCookie) {
+    if (demoRole) {
       // IP-scoped rate limit since demo bypasses auth/per-user quota
-      const ip =
-        request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-        request.headers.get('x-real-ip') ||
-        'unknown'
-      const rl = checkDemoRateLimit(ip)
-      if (!rl.ok) {
+      const ip = getClientIp(request)
+      const allowed = await checkIpRateLimit(`chat-demo:${ip}`, DEMO_RATE_LIMIT, DEMO_WINDOW_SECONDS)
+      if (!allowed) {
         return Response.json(
           {
-            error: `Demasiadas solicitudes desde tu red. Intenta de nuevo en ${rl.retryAfter}s.`,
+            error: `Demasiadas solicitudes desde tu red. Intenta de nuevo en ${DEMO_WINDOW_SECONDS}s.`,
           },
           {
             status: 429,
-            headers: { 'Retry-After': String(rl.retryAfter ?? 60) },
+            headers: { 'Retry-After': String(DEMO_WINDOW_SECONDS) },
           }
         )
       }
 
       const demoProfile =
-        demoCookie === 'founder'
+        demoRole === 'founder'
           ? { id: 'demo', email: 'demo.founder@s4c.demo', full_name: 'Ana Quispe', role: 'founder', org_id: null, startup_name: 'EcoBio Perú', stage: '3', diagnostic_score: 84 }
           : null
 
       // Clamp tool data values to keep context manageable
-      const safeUserContext = userContext ? clampUserContext(userContext) : undefined
+      const safeUserContext = safeContext(userContext)
       const startupContext = buildStartupContext(null, null, demoProfile, safeUserContext)
       const systemPrompt = AGENT_PROMPTS[agentType] || AGENT_PROMPTS.mentor
 
@@ -185,7 +180,7 @@ export async function POST(request: NextRequest) {
               controller.enqueue(
                 encoder.encode(
                   `data: ${JSON.stringify({
-                    delta: `Lo siento, el servicio AI tuvo un problema técnico. (${errMsg.slice(0, 120)})`,
+                    delta: 'Lo siento, el servicio AI tuvo un problema técnico. Intenta de nuevo en unos minutos.',
                   })}\n\n`
                 )
               )
@@ -217,7 +212,7 @@ export async function POST(request: NextRequest) {
       } catch (apiError) {
         const errMsg = apiError instanceof Error ? apiError.message : String(apiError)
         console.error('[S4C AI] Gemini API error (demo):', errMsg)
-        aiResponse = `Lo siento, el servicio AI tuvo un problema técnico. (${errMsg.slice(0, 120)})`
+        aiResponse = 'Lo siento, el servicio AI tuvo un problema técnico. Intenta de nuevo en unos minutos.'
       }
 
       return Response.json({
@@ -287,7 +282,7 @@ export async function POST(request: NextRequest) {
       .select('*')
       .eq('user_id', user.id)
 
-    const startupContext = buildStartupContext(startup, progress, profile, userContext)
+    const startupContext = buildStartupContext(startup, progress, profile, safeContext(userContext))
 
     // Load conversation history if conversationId provided
     let history: Array<{ role: string; content: string }> = []
@@ -462,7 +457,7 @@ export async function POST(request: NextRequest) {
       { headers: rlHeaders }
     )
   } catch (err) {
-    console.error('AI chat error:', err)
+    console.error('[S4C AI] chat route error:', err)
     return Response.json(
       { error: 'Error interno del servidor. Intenta de nuevo.' },
       { status: 500 }
