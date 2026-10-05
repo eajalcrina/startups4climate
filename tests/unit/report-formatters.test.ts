@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { formatToolData } from '@/lib/report-formatters'
+import { formatToolData, getFormatterIds, getLegacyFormatterAliases } from '@/lib/report-formatters'
+import { TOOLS } from '@/lib/tools-data'
 
 /** Strip tags so assertions can focus on visible text. */
 function text(html: string): string {
@@ -118,21 +119,76 @@ describe('formatToolData — cap-table (legacy storage id)', () => {
 })
 
 describe('formatToolData — catalog ids', () => {
-  // BUG: FORMATTERS is keyed by legacy ids ('pitch-deck', 'unit-economics',
-  // 'cap-table', 'data-room', …) while generateGlobalReport() calls
-  // formatToolData(tool.id) with the current TOOLS ids ('pitch-deck-builder',
-  // 'ltv-unit-economics', 'cap-table-fundraising', 'data-room-builder').
-  // Only 'lean-canvas' matches, so every other tool falls back to the raw
-  // key/value dump (e.g. "s2_problem_stat") instead of the curated layout.
-  it.fails('uses the pitch deck formatter for the "pitch-deck-builder" catalog id', () => {
+  const toolIds = new Set(TOOLS.map((t) => t.id))
+
+  it('every formatter key is a current tool id from TOOLS', () => {
+    const ids = getFormatterIds()
+    expect(ids.length).toBeGreaterThan(0)
+    for (const id of ids) expect(toolIds.has(id), id).toBe(true)
+  })
+
+  it('every legacy alias points to a registered formatter and is not itself a TOOLS id', () => {
+    const formatterIds = new Set(getFormatterIds())
+    for (const [legacy, current] of Object.entries(getLegacyFormatterAliases())) {
+      expect(formatterIds.has(current), `${legacy} → ${current}`).toBe(true)
+      expect(toolIds.has(legacy), legacy).toBe(false)
+    }
+  })
+
+  it('uses the pitch deck formatter for the "pitch-deck-builder" catalog id', () => {
     const t = text(formatToolData('pitch-deck-builder', { s2_problem_stat: '40% del agua se pierde' }))
     expect(t).toContain('Estadística del problema')
     expect(t).not.toContain('s2_problem_stat')
+  })
+
+  it('renders the current PitchDeck field ids with their labels', () => {
+    const t = text(formatToolData('pitch-deck-builder', { values: { problem_stat: '40% del agua se pierde', ask: '$1M' } }))
+    expect(t).toContain('El Problema Estadística clave del problema 40% del agua se pierde')
+    expect(t).toContain('El Ask específico $1M')
+    expect(t).not.toContain('problem_stat')
+  })
+
+  it('resolves stage-qualified storage ids of transversal tools', () => {
+    const t = text(formatToolData('pitch-deck-builder__stage2', { values: { tagline: 'Agua para todos' } }))
+    expect(t).toContain('Tagline (1 línea) Agua para todos')
   })
 
   it('uses the pitch deck formatter for the legacy "pitch-deck" id', () => {
     const t = text(formatToolData('pitch-deck', { s2_problem_stat: '40% del agua se pierde' }))
     expect(t).toContain('Problema')
     expect(t).toContain('Estadística del problema 40% del agua se pierde')
+  })
+
+  it('uses the unit economics formatter for "ltv-unit-economics"', () => {
+    const t = text(formatToolData('ltv-unit-economics', { values: { revenuePerClient: '1000', cogsPerUnit: '400', churnRateAnnual: '20' } }))
+    expect(t).toContain('LTV $3,000')
+  })
+
+  it('uses the cap table formatter for "cap-table-fundraising"', () => {
+    const t = text(formatToolData('cap-table-fundraising', { values: { founders: [{ name: 'Ana', shares: '1' }], rounds: [], optionPool: '10' } }))
+    expect(t).toContain('Fundadores')
+    expect(t).toContain('100.0%')
+  })
+
+  it('renders the current DataRoomBuilder shape for "data-room-builder"', () => {
+    const t = text(formatToolData('data-room-builder', {
+      values: {
+        categories: [
+          { name: 'Legal', documents: [{ name: 'Acta constitutiva', status: 'listo' }, { name: 'Poderes', status: 'pendiente' }] },
+        ],
+      },
+    }))
+    expect(t).toContain('Legal (1/2)')
+    expect(t).toContain('Listo Acta constitutiva')
+    expect(t).toContain('Pendiente Poderes')
+    expect(t).not.toContain('Prioridad')
+  })
+
+  it('still renders the legacy data room shape', () => {
+    const t = text(formatToolData('data-room', {
+      categories: [{ label: 'Legal', docs: [{ label: 'Acta', status: 'done', priority: 'alta' }] }],
+    }))
+    expect(t).toContain('Legal (1/1)')
+    expect(t).toContain('Completado Acta Prioridad: alta')
   })
 })
