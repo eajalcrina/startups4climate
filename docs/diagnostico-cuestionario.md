@@ -1,10 +1,12 @@
-# Cuestionario de Diagnóstico — DiagnosticForm
+# Cuestionario de Diagnóstico — DiagnosticForm (v2.1)
 
 ## Flujo general
 
-**12 pasos**: Datos de contacto → 10 preguntas → Pantalla de carga → Resultados
+**12 pasos (0–11)**: Paso 0 (datos de contacto) → 9 preguntas (P1–P9) → Paso 10 (pantalla de carga) → Paso 11 (resultados)
 
-Componente: `src/components/DiagnosticForm.tsx`
+- Componente: `src/components/DiagnosticForm.tsx`
+- Lógica de scoring (preguntas, perfiles, inconsistencias, reglas adaptativas, mapeo de herramientas): `src/lib/diagnostic-scoring.ts`
+- Tests: `tests/unit/diagnostic-scoring.test.ts`
 
 ---
 
@@ -17,28 +19,22 @@ Componente: `src/components/DiagnosticForm.tsx`
 | Nombre de tu startup | Mín. 2 caracteres, requerido |
 | Vertical | Selección requerida |
 | Describe brevemente tu idea | Mín. 10 caracteres, requerido |
-| País (código telefónico) | Selector 17 países LATAM, default México +52 |
+| País (código telefónico) | Selector de 17 países LATAM, default México +52 |
 | Teléfono (WhatsApp) | Opcional |
 | Sitio web | Opcional |
+| ¿Cómo nos conociste? | Opcional |
 
 **Opciones de vertical:** Fintech · Healthtech · Edtech · Agritech · Cleantech / Energía · Logística / Movilidad · Proptech · Biotech · Deep Tech · Otra
 
----
-
-## Preguntas (P1–P10)
-
-### P1 — Naturaleza del Producto *(tipo: tag)*
-**¿En qué vertical se encuentra tu startup?**
-
-- SaaS / Software
-- Hardware / IoT
-- Deep Tech / Biotech
-- Marketplace / Plataforma
-- Servicios / Consultoría
+**¿Cómo nos conociste?:** Redes sociales · Recomendación de un amigo o colega · Google / búsqueda web · Evento o conferencia · Prensa o medios · Otro
 
 ---
 
-### P2 — Nivel de Madurez *(tipo: score)*
+## Preguntas (P1–P9)
+
+Las preguntas tipo **score** suman al puntaje total; las tipo **tag** solo personalizan el resultado (roadmap y herramientas recomendadas).
+
+### P1 — Nivel de Madurez *(tipo: score · clave `madurez`)*
 **¿En qué fase de desarrollo se encuentra tu startup hoy?**
 
 | Opción | Score |
@@ -50,7 +46,7 @@ Componente: `src/components/DiagnosticForm.tsx`
 
 ---
 
-### P3 — Validación Comercial *(tipo: score)*
+### P2 — Validación Comercial *(tipo: score · clave `validacion`)*
 **¿Cuál es el estado actual de la validación de tu mercado?**
 
 | Opción | Score |
@@ -62,7 +58,7 @@ Componente: `src/components/DiagnosticForm.tsx`
 
 ---
 
-### P4 — Modelo de Negocio *(tipo: tag)*
+### P3 — Modelo de Negocio *(tipo: tag · clave `modelo_negocio`)*
 **¿Cuál es tu modelo de ingresos principal?**
 
 - Suscripción (SaaS)
@@ -73,19 +69,20 @@ Componente: `src/components/DiagnosticForm.tsx`
 
 ---
 
-### P5 — Medición de Impacto *(tipo: score)*
+### P4 — Medición de Impacto *(tipo: score · clave `impacto`)*
 **¿Cómo mides el impacto positivo de tu startup?**
 
 | Opción | Score |
 |--------|-------|
 | Aún no medimos o solo tenemos una narrativa cualitativa | 1 |
 | Tenemos métricas básicas internas de impacto | 2 |
+| Reportamos impacto regularmente a stakeholders o clientes | 3 |
 | Contamos con verificación de terceros o certificaciones | 4 |
 
 ---
 
-### P6 — Necesidad de Financiamiento *(tipo: score)*
-**¿Cuánto capital buscas levantar en los próximos 12–18 meses?**
+### P5 — Necesidad de Financiamiento *(tipo: score · clave `financiamiento`)*
+**¿Cuánto capital buscas levantar en los próximos 12-18 meses?**
 
 | Opción | Score |
 |--------|-------|
@@ -96,7 +93,7 @@ Componente: `src/components/DiagnosticForm.tsx`
 
 ---
 
-### P7 — Equipo Fundador *(tipo: tag)*
+### P6 — Equipo Fundador *(tipo: tag · clave `equipo_tamano`)*
 **¿Cuántas personas hay en tu equipo fundador?**
 
 - Solo founder
@@ -106,7 +103,7 @@ Componente: `src/components/DiagnosticForm.tsx`
 
 ---
 
-### P8 — Composición del Equipo *(tipo: score)*
+### P7 — Composición del Equipo *(tipo: score · clave `equipo`, máx. 3)*
 **¿Cuál es el balance actual del equipo fundador?**
 
 | Opción | Score |
@@ -117,17 +114,18 @@ Componente: `src/components/DiagnosticForm.tsx`
 
 ---
 
-### P9 — Cuello de Botella Operativo *(tipo: tag)*
+### P8 — Cuello de Botella Operativo *(tipo: tag · clave `cuello_botella`)*
 **¿Cuál es tu principal obstáculo hoy?**
 
 - Encontrar product-market fit
 - Conseguir clientes
+- Optimizar operaciones y controlar costos
 - Estructurar financieramente
 - Levantar inversión
 
 ---
 
-### P10 — Preparación para Inversión *(tipo: score)*
+### P9 — Preparación para Inversión *(tipo: score · clave `data_room`)*
 **¿Si un inversor te pidiera acceso a tu Data Room hoy, qué tan listo estás?**
 
 | Opción | Score |
@@ -139,7 +137,17 @@ Componente: `src/components/DiagnosticForm.tsx`
 
 ---
 
-## Paso 11 — Pantalla de carga
+### Alertas adaptativas (durante el cuestionario)
+
+| ID | Pregunta | Se muestra cuando |
+|----|----------|-------------------|
+| ADAPT-01 | P2 | Madurez ≤ 2 y se elige "Ingresos recurrentes demostrados o contratos firmados" |
+| ADAPT-02 | P5 | Madurez = 1 y se elige "Entre $1.5M y $5M" o "Más de $5M" |
+| ADAPT-03 | P9 | Madurez ≤ 2 y se elige "Todo lo anterior + métricas de tracción y auditorías listas" |
+
+---
+
+## Paso 10 — Pantalla de carga
 
 > *"Analizando tu startup… Calculando tu Startup Readiness Score y preparando tu roadmap personalizado."*
 
@@ -150,19 +158,33 @@ Acciones en background:
 
 ---
 
-## Paso 12 — Resultados
+## Paso 11 — Resultados
 
-**Score total** = suma de las 6 preguntas tipo score (P2, P3, P5, P6, P8, P10)
-**Máximo posible:** 24 pts
+**Score total** = suma de las 6 preguntas tipo score (P1, P2, P4, P5, P7, P9)
+**Mínimo posible:** 6 pts · **Máximo posible:** 23 pts (P7 tiene máximo 3; las demás, 4)
 
 ### Perfiles de resultado
 
 | Rango | Etapa | Tag | Color |
 |-------|-------|-----|-------|
-| 6–11 | ETAPA 1: Pre-incubación | Ideación | #FF6B4A |
-| 12–18 | ETAPA 2: Incubación | Validación | #0D9488 |
-| 19–21 | ETAPA 3: Aceleración | Crecimiento | #D97706 |
-| 22–24 | ETAPA 4: Escalamiento | Escala | #3B82F6 |
+| 6–11 | ETAPA 1: Pre-incubación | Ideación | #DA4E24 |
+| 12–16 | ETAPA 2: Incubación | Validación | #1F77F6 |
+| 17–20 | ETAPA 3: Aceleración | Crecimiento | #F0721D |
+| 21–23 | ETAPA 4: Escalamiento | Escala | #1F77F6 |
+
+Un total fuera de todos los rangos (no debería ocurrir con el cuestionario completo) se clasifica como ETAPA 1.
+
+### Inconsistencias detectadas
+
+| ID | Condición |
+|----|-----------|
+| INC-01 | Madurez ≤ 2 y validación = 4 |
+| INC-02 | Madurez = 1 y data room ≥ 3 |
+| INC-03 | Madurez = 1 y financiamiento ≥ 3 |
+| INC-04 | Validación ≤ 1 y data room = 4 |
+| INC-05 | \|madurez − validación\| ≥ 3 |
+| INC-06 | Equipo = 1 (100% técnico) y data room ≥ 3 |
+| INC-07 | Cuello de botella = operaciones y madurez ≤ 2 |
 
 ### Herramientas recomendadas por etapa
 
@@ -173,18 +195,25 @@ Acciones en background:
 | Aceleración | Unit Economics · Proceso de Ventas · Modelo de Negocio · Framework de Pricing |
 | Escalamiento | Pitch Deck · Cap Table · Plan de Producto · Validación de Tracción |
 
+Se recomiendan 3 herramientas: una según el cuello de botella (P8; versión temprana para etapas 1–2 y avanzada para 3–4), una según el modelo de negocio (P3) y la primera de la etapa siguiente, sin duplicados.
+
 ### Dimensiones del score (dimension_scores)
 
-| Dimensión | Pregunta fuente |
-|-----------|----------------|
-| madurez | P2 |
-| validacion | P3 |
-| impacto | P5 |
-| financiamiento | P6 |
-| equipo | P8 |
-| data_room | P10 |
+| Dimensión | Pregunta fuente | Máximo |
+|-----------|----------------|--------|
+| madurez | P1 | 4 |
+| validacion | P2 | 4 |
+| impacto | P4 | 4 |
+| financiamiento | P5 | 4 |
+| equipo | P7 | 3 |
+| data_room | P9 | 4 |
+
+Una pregunta sin responder se guarda como 0.
 
 ### CTAs en pantalla de resultados
 
-1. **"Acceder a las Herramientas"** → `/tools`
-2. **"Agenda una Sesión Estratégica"** → Calendly
+(Solo en la versión no embebida.)
+
+1. **"Acceder a mis Herramientas"** → `/tools?source=diagnostic&score=…&etapa=…` (sin sesión: **"Crear cuenta y desbloquear herramientas"** abre el registro)
+2. **"Enviarme los resultados por email"** → `POST /api/diagnostic/email-results`
+3. **"Agenda una sesión estratégica por WhatsApp"** → `wa.me` con mensaje prellenado
