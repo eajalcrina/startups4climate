@@ -13,15 +13,16 @@ Estado actual: en producción. 3 universidades cerradas (UNAMAD, Wiener, BioInno
 
 ## Stack
 
-- Framework: Next.js 15 (App Router)
+- Framework: Next.js 16 (App Router) + React 19
 - Estilos: Tailwind CSS v4
 - Base de datos + Auth: Supabase (proyecto `mvawsorasuqqlzlayhrx`, plan Free por ahora)
 - Email: Resend
 - Motor AI: **Gemini 2.5 Flash** (vía endpoint OpenAI-compatible)
 - Iconos: lucide-react
+- Exportación Excel: `exceljs` (reemplazó a `xlsx`/SheetJS por vulnerabilidades sin parche)
 - Lenguaje: TypeScript
 - Deploy: Vercel
-- Repo: github.com/lorenzoortiz-ind/startups4climate
+- Repo: github.com/eajalcrina/startups4climate
 
 ## Estructura de páginas
 
@@ -42,7 +43,8 @@ Estado actual: en producción. 3 universidades cerradas (UNAMAD, Wiener, BioInno
 ## Convenciones
 
 - Componentes en `/components`, organizados por sección o feature
-- Páginas en `/app` siguiendo App Router de Next.js 15
+- Páginas en `/app` siguiendo App Router de Next.js 16
+- Proxy de Next.js 16 en `src/proxy.ts` (reemplaza a `middleware.ts`)
 - Variables de entorno en `.env.local` (nunca commitear)
 - Nombres de archivos: kebab-case para páginas y componentes
 - Clases Tailwind directamente en JSX, sin CSS externo salvo globals.css
@@ -63,13 +65,21 @@ Estado actual: en producción. 3 universidades cerradas (UNAMAD, Wiener, BioInno
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=   # solo servidor (rutas API / cron); nunca exponer al cliente
 RESEND_API_KEY=
 GEMINI_API_KEY=              # Gemini 2.5 Flash para motor AI
+CRON_SECRET=                 # autentica los cron jobs de Vercel (vercel.json)
+NEXT_PUBLIC_SITE_URL=        # URL pública (links en emails, passport compartido)
+NEXT_PUBLIC_DEMO_ENABLED=    # "true" habilita /api/demo/[role] en producción (por defecto deshabilitado)
 ```
 
 Todas configuradas en Vercel (Production, Preview, Development).
 
 ## Supabase
+
+### Migraciones
+
+- Versionadas en `supabase/migrations/` (un archivo `.sql` por cambio). Todo cambio de esquema o RLS va como migración nueva; no editar el esquema a mano en el dashboard.
 
 ### Tablas principales
 
@@ -94,7 +104,7 @@ Todas configuradas en Vercel (Production, Preview, Development).
 - `email/password` habilitado
 - `autoRefreshToken: true`, `persistSession: true`
 - Password reset flow via `supabase.auth.resetPasswordForEmail()`
-- Middleware con timeout 3s para admin role check (redirect a `/tools` si timeout)
+- Proxy (`src/proxy.ts`) con timeout de 3 s para el chequeo de rol admin (redirect a `/tools` si hay timeout)
 - ⚠️ Leaked Password Protection: requiere Plan Pro (pendiente)
 
 ## Motor AI
@@ -109,9 +119,9 @@ Todas configuradas en Vercel (Production, Preview, Development).
 
 ## Usuarios actuales
 
-Password universal: `S4c2026demo!`
+Credenciales: gestor de contraseñas del equipo (no commitear).
 
-- **Superadmins**: <lorenzo.ortiz@redesignlab.org>, <eddie@redesignlab.org>
+- **Superadmins**: equipo Redesign Lab (cuentas en el gestor de contraseñas)
 - **Demo admin_org**: <admin@demo.startups4climate.org> (org: "Universidad Demo — Startups4Climate")
 - **Demo founder**: <founder@demo.startups4climate.org> (startup: EcoBio Perú, sin org → puede pedir ingreso a cohorts)
 - **Founders orgánicos**: 13 founders reales registrados desde la landing (sin org asignada aún)
