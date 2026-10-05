@@ -19,8 +19,9 @@ const DEFAULT_INPUTS: Record<string, string> = {
 
 const ACCENT = '#1F77F6'
 
-export default function UnitEconomics({ userId, onComplete, onGenerateReport }: ToolComponentProps) {
-  const [inputs, setInputs] = useToolState(userId, 'unit-economics', DEFAULT_INPUTS)
+export default function UnitEconomics({ userId, onComplete, onGenerateReport, toolStorageId }: ToolComponentProps) {
+  // Data saved before the storage id matched the catalog id lives under 'unit-economics'
+  const [inputs, setInputs] = useToolState(userId, toolStorageId ?? 'ltv-unit-economics', DEFAULT_INPUTS, 'unit-economics')
   const [saved, setSaved] = useState(false)
   const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2000) }
 

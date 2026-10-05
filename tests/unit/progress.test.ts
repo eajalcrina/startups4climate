@@ -20,6 +20,7 @@ import {
   getProgress,
   getProgressAsync,
   getToolData,
+  loadToolDataWithFallback,
   markReportGenerated,
   markToolCompleted,
   saveToolData,
@@ -241,5 +242,53 @@ describe('writes (Supabase first, then cache)', () => {
     expect(cached(REAL_USER).t).toMatchObject({ completed: true, reportGenerated: true })
     const last = state.queries[state.queries.length - 1] as RecordedQuery
     expect((opArgs(last, 'upsert') as [Record<string, unknown>])[0]).toMatchObject({ completed: true, report_generated: true })
+  })
+})
+
+describe('loadToolDataWithFallback (legacy storage ids)', () => {
+  function toolIdOf(q: { ops: { method: string; args: unknown[] }[] }): unknown {
+    return q.ops.find((o) => o.method === 'eq' && o.args[0] === 'tool_id')?.args[1]
+  }
+
+  it('prefers data stored under the current id', async () => {
+    setResolver((q) => ({ data: toolIdOf(q) === 'ltv-unit-economics' ? { data: { values: { a: '1' } } } : null, error: null }))
+    const r = await loadToolDataWithFallback(REAL_USER, 'ltv-unit-economics', ['unit-economics'])
+    expect(r).toEqual({ toolId: 'ltv-unit-economics', source: 'remote', data: { values: { a: '1' } } })
+    expect(state.queries.map(toolIdOf)).toEqual(['ltv-unit-economics'])
+  })
+
+  it('uses the local cache of the current id before any legacy id', async () => {
+    setResolver(() => ({ data: null, error: null }))
+    saveToolDataSync(REAL_USER, 'ltv-unit-economics', { values: { a: 'local' } })
+    const r = await loadToolDataWithFallback(REAL_USER, 'ltv-unit-economics', ['unit-economics'])
+    expect(r).toEqual({ toolId: 'ltv-unit-economics', source: 'local', data: { values: { a: 'local' } } })
+  })
+
+  it('falls back to the legacy Supabase row when the current id is empty', async () => {
+    setResolver((q) => ({ data: toolIdOf(q) === 'unit-economics' ? { data: { values: { a: 'old' } } } : null, error: null }))
+    const r = await loadToolDataWithFallback(REAL_USER, 'ltv-unit-economics', ['unit-economics'])
+    expect(r).toEqual({ toolId: 'unit-economics', source: 'remote', data: { values: { a: 'old' } } })
+    expect(state.queries.map(toolIdOf)).toEqual(['ltv-unit-economics', 'unit-economics'])
+  })
+
+  it('falls back to the legacy namespaced localStorage entry (demo users skip Supabase)', async () => {
+    saveToolDataSync(DEMO_USER, 'cap-table', { values: { optionPool: '15' } })
+    const r = await loadToolDataWithFallback(DEMO_USER, 'cap-table-fundraising', ['cap-table'])
+    expect(r).toEqual({ toolId: 'cap-table', source: 'local', data: { values: { optionPool: '15' } } })
+    expect(state.queries).toHaveLength(0)
+  })
+
+  it('returns null when nothing is stored under any id', async () => {
+    setResolver(() => ({ data: null, error: null }))
+    expect(await loadToolDataWithFallback(REAL_USER, 'cap-table-fundraising', ['cap-table'])).toBeNull()
+  })
+
+  it('treats a Supabase exception as offline and still checks localStorage', async () => {
+    setResolver(() => {
+      throw new Error('network')
+    })
+    saveToolDataSync(REAL_USER, 'cap-table', { values: { optionPool: '5' } })
+    const r = await loadToolDataWithFallback(REAL_USER, 'cap-table-fundraising', ['cap-table'])
+    expect(r).toEqual({ toolId: 'cap-table', source: 'local', data: { values: { optionPool: '5' } } })
   })
 })

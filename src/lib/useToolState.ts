@@ -1,16 +1,20 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { getToolData, saveToolDataSync, syncToolDataToSupabase, loadToolDataFromSupabase } from './progress'
+import { saveToolDataSync, syncToolDataToSupabase, loadToolDataWithFallback } from './progress'
 
 /**
  * Hook that loads tool data from Supabase first (fallback to localStorage) and
  * auto-saves to Supabase first with localStorage as backup cache.
+ *
+ * `legacyToolId` is read only when nothing is stored under `toolId` (e.g. a
+ * tool whose storage id changed); saves always go to `toolId`.
  */
 export function useToolState<T extends object>(
   userId: string,
   toolId: string,
-  defaultValue: T
+  defaultValue: T,
+  legacyToolId?: string
 ): [T, (updater: T | ((prev: T) => T)) => void, boolean] {
   const [state, setState] = useState<T>(defaultValue)
   const [loaded, setLoaded] = useState(false)
@@ -22,44 +26,35 @@ export function useToolState<T extends object>(
     stateRef.current = state
   }, [state])
 
-  // Load from Supabase first, fallback to localStorage
+  // Load from Supabase first, fallback to localStorage. If nothing is stored
+  // under `toolId`, try `legacyToolId` (data is re-saved under `toolId`).
   useEffect(() => {
     let cancelled = false
 
     async function load() {
-      try {
-        const remote = await loadToolDataFromSupabase(userId, toolId)
-        if (!cancelled && remote && Object.keys(remote).length > 0) {
-          const values = ('values' in remote && remote.values && typeof remote.values === 'object')
-            ? remote.values as T
-            : remote as unknown as T
-          setState({ ...defaultValue, ...values })
-          // Also cache to localStorage
-          saveToolDataSync(userId, toolId, remote)
-          setLoaded(true)
-          return
+      const loadedData = await loadToolDataWithFallback(
+        userId,
+        toolId,
+        legacyToolId ? [legacyToolId] : []
+      )
+      if (cancelled) return
+      if (loadedData) {
+        const saved = loadedData.data
+        const values = ('values' in saved && saved.values && typeof saved.values === 'object')
+          ? saved.values as T
+          : saved as unknown as T
+        setState({ ...defaultValue, ...values })
+        // Refresh the local cache with what Supabase returned
+        if (loadedData.source === 'remote' && loadedData.toolId === toolId) {
+          saveToolDataSync(userId, toolId, saved)
         }
-      } catch {
-        console.warn('[S4C Sync] Offline mode — loading tool data from localStorage')
       }
-
-      // Fallback to localStorage
-      if (!cancelled) {
-        const saved = getToolData(userId, toolId) as { values?: T } & T
-        if (saved && Object.keys(saved).length > 0) {
-          if ('values' in saved && saved.values && typeof saved.values === 'object') {
-            setState({ ...defaultValue, ...saved.values as T })
-          } else {
-            setState({ ...defaultValue, ...saved as T })
-          }
-        }
-        setLoaded(true)
-      }
+      setLoaded(true)
     }
 
     load()
     return () => { cancelled = true }
-  }, [userId, toolId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [userId, toolId, legacyToolId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Debounced save — 500ms after last change, Supabase first + localStorage cache
   useEffect(() => {

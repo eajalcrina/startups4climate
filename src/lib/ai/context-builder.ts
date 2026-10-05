@@ -135,6 +135,7 @@ export function buildStartupContext(
       'tam-calculator': 'TAM/SAM/SOM',
       'mvbp-definition': 'MVBP Definition',
       'traction-validation': 'Tracción y validación',
+      'ltv-unit-economics': 'Unit Economics',
       'unit-economics': 'Unit Economics',
       'product-plan-scaling': 'Plan de producto y escalado',
       'pitch-deck-builder': 'Pitch Deck',

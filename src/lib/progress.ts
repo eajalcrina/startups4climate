@@ -323,6 +323,42 @@ export async function loadToolDataFromSupabase(
   return (data.data as Record<string, unknown>) ?? null
 }
 
+export interface LoadedToolData {
+  /** The storage id the data was found under (`toolId` or a legacy id). */
+  toolId: string
+  source: 'remote' | 'local'
+  data: Record<string, unknown>
+}
+
+function hasKeys(value: Record<string, unknown> | null | undefined): value is Record<string, unknown> {
+  return !!value && Object.keys(value).length > 0
+}
+
+/**
+ * Load a tool's saved data: Supabase first, then the namespaced localStorage
+ * cache. When nothing is stored under `toolId`, each id in `legacyToolIds` is
+ * tried the same way so data saved under an older storage id is not lost.
+ * Callers keep saving under `toolId`, which migrates legacy data on the next
+ * save (the legacy row is left untouched).
+ */
+export async function loadToolDataWithFallback(
+  userId: string,
+  toolId: string,
+  legacyToolIds: readonly string[] = []
+): Promise<LoadedToolData | null> {
+  for (const id of [toolId, ...legacyToolIds]) {
+    try {
+      const remote = await loadToolDataFromSupabase(userId, id)
+      if (hasKeys(remote)) return { toolId: id, source: 'remote', data: remote }
+    } catch {
+      console.warn('[S4C Sync] Offline mode — loading tool data from localStorage')
+    }
+    const local = getToolData(userId, id)
+    if (hasKeys(local)) return { toolId: id, source: 'local', data: local }
+  }
+  return null
+}
+
 /**
  * Hydrate localStorage cache from Supabase.
  * Since Supabase is now the primary source, this simply refreshes the local cache.

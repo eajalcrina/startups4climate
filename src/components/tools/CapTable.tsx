@@ -23,8 +23,9 @@ interface Round {
 
 const COLORS = ['#1F77F6', '#DA4E24', '#2A222B', '#1F77F6', '#DC2626', '#1F77F6']
 
-export default function CapTable({ userId, onComplete, onGenerateReport }: ToolComponentProps) {
-  const [state, setState] = useToolState(userId, 'cap-table', {
+export default function CapTable({ userId, onComplete, onGenerateReport, toolStorageId }: ToolComponentProps) {
+  // Data saved before the storage id matched the catalog id lives under 'cap-table'
+  const [state, setState] = useToolState(userId, toolStorageId ?? 'cap-table-fundraising', {
     founders: [
       { id: '1', name: 'Fundador 1', shares: '600000' },
       { id: '2', name: 'Fundador 2', shares: '400000' },
@@ -33,7 +34,7 @@ export default function CapTable({ userId, onComplete, onGenerateReport }: ToolC
       { id: 'r1', name: 'Pre-Seed', type: 'safe' as const, preMoneyValuation: '2000000', amountRaised: '300000', investorName: 'Angel / Pre-seed VC' },
     ] as Round[],
     optionPool: '10',
-  })
+  }, 'cap-table')
   const { founders, rounds, optionPool } = state
   const setFounders = (updater: Founder[] | ((prev: Founder[]) => Founder[])) =>
     setState((prev) => ({ ...prev, founders: typeof updater === 'function' ? updater(prev.founders) : updater }))
