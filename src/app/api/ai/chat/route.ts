@@ -83,6 +83,13 @@ const AGENT_PROMPTS: Record<string, string> = {
   radar: `Eres un analista experto del ecosistema de innovación en Latinoamérica. Respondes en español. Das información sobre tendencias, noticias, fondos de inversión, programas de aceleración y eventos relevantes para startups de impacto en la región. Tus respuestas son concisas y accionables. No uses emojis ni markdown con # headers.`,
 }
 
+/** Own-property lookup so values like "constructor" can't resolve to prototype members. */
+function getAgentPrompt(agentType: string): string {
+  return Object.prototype.hasOwnProperty.call(AGENT_PROMPTS, agentType)
+    ? AGENT_PROMPTS[agentType]
+    : AGENT_PROMPTS.mentor
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Early check: ensure AI API key is configured
@@ -147,7 +154,7 @@ export async function POST(request: NextRequest) {
       // Clamp tool data values to keep context manageable
       const safeUserContext = safeContext(userContext)
       const startupContext = buildStartupContext(null, null, demoProfile, safeUserContext)
-      const systemPrompt = AGENT_PROMPTS[agentType] || AGENT_PROMPTS.mentor
+      const systemPrompt = getAgentPrompt(agentType)
 
       const messages = [
         { role: 'system', content: systemPrompt },
@@ -306,8 +313,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Build messages array
-    const systemPrompt =
-      AGENT_PROMPTS[agentType] || AGENT_PROMPTS.mentor
+    const systemPrompt = getAgentPrompt(agentType)
 
     const messages = [
       { role: 'system', content: systemPrompt },
