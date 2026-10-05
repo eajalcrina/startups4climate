@@ -27,7 +27,7 @@ test.describe('Authentication and Routing @demo', () => {
     await page.goto('/demo-admin');
     
     // Check we are in the admin view
-    await expect(page.locator('text=S4C Admin').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Panel de gestión', { exact: true }).first()).toBeVisible({ timeout: 10000 });
     
     // Go to homepage
     await page.goto('/');
