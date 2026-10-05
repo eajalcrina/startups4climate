@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Founder Tools Tests', () => {
+test.describe('Founder Tools Tests @demo', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate via demo entry to establish a founder session cookie
     await page.goto('/demo-tools');
