@@ -1,5 +1,9 @@
 // Tool-specific HTML formatters for the global report
-// Each formatter understands the data shape of its tool and produces readable HTML
+// Each formatter understands the data shape of its tool and produces readable HTML.
+// All user-provided values MUST go through escapeHtml(): the report is opened
+// with document.write() in a same-origin window.
+
+import { escapeHtml } from './security/html'
 
 const S = {
   label: 'color:#6B7280;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px',
@@ -13,9 +17,9 @@ const S = {
     const m: Record<string, string> = { listo: '#1F77F6', borrador: '#2A222B', pendiente: '#9CA3AF', done: '#1F77F6', partial: '#2A222B', 'in-progress': '#2A222B', pending: '#9CA3AF', missing: '#EF4444', na: '#9CA3AF', identified: '#6B7280', applying: '#1F77F6', secured: '#1F77F6', rejected: '#EF4444' }
     const labels: Record<string, string> = { listo: 'Listo', borrador: 'Borrador', pendiente: 'Pendiente', done: 'Completado', partial: 'Parcial', 'in-progress': 'En progreso', pending: 'Pendiente', missing: 'Faltante', na: 'N/A', identified: 'Identificado', applying: 'Aplicando', secured: 'Asegurado', rejected: 'Rechazado' }
     const c = m[s] || '#6B7280'
-    return `<span style="${S.badge(c)}">${labels[s] || s}</span>`
+    return `<span style="${S.badge(c)}">${escapeHtml(labels[s] || s)}</span>`
   },
-  field: (label: string, value: string) => value?.trim() ? `<div style="${S.card}"><div style="${S.label}">${label}</div><div style="${S.value}">${value}</div></div>` : '',
+  field: (label: string, value: string) => value?.trim() ? `<div style="${S.card}"><div style="${S.label}">${escapeHtml(label)}</div><div style="${S.value}">${escapeHtml(value)}</div></div>` : '',
 }
 
 // ──────────── Lean Canvas ────────────
@@ -67,7 +71,7 @@ function formatUnitEconomics(data: Record<string, unknown>): string {
       <div style="${S.card};border-left:4px solid ${greenPremium <= 20 ? '#1F77F6' : '#EF4444'}"><div style="${S.label}">Green Premium</div><div style="font-size:1.25rem;font-weight:700;color:${greenPremium <= 20 ? '#1F77F6' : '#EF4444'}">${greenPremium.toFixed(1)}%</div></div>
     </div>
     <div style="${S.sectionTitle}">Inputs</div>
-    <div style="${S.grid2}">${Object.entries(UE_LABELS).map(([k, label]) => `<div style="${S.card}"><div style="${S.label}">${label}</div><div style="${S.value}">${v[k] || '—'}</div></div>`).join('')}</div>
+    <div style="${S.grid2}">${Object.entries(UE_LABELS).map(([k, label]) => `<div style="${S.card}"><div style="${S.label}">${label}</div><div style="${S.value}">${escapeHtml(v[k] || '—')}</div></div>`).join('')}</div>
   `
 }
 
@@ -137,7 +141,7 @@ function formatCapTable(data: Record<string, unknown>): string {
       </tr></thead>
       <tbody>${founders.map(f => {
         const pct = totalShares > 0 ? ((parseFloat(f.shares) || 0) / totalShares * 100) : 0
-        return `<tr style="border-bottom:1px solid #F3F4F6"><td style="padding:8px;color:#111827;font-weight:500">${f.name}</td><td style="padding:8px;text-align:right;color:#111827">${Number(f.shares || 0).toLocaleString()}</td><td style="padding:8px;text-align:right;font-weight:600;color:#DA4E24">${pct.toFixed(1)}%</td></tr>`
+        return `<tr style="border-bottom:1px solid #F3F4F6"><td style="padding:8px;color:#111827;font-weight:500">${escapeHtml(f.name)}</td><td style="padding:8px;text-align:right;color:#111827">${Number(f.shares || 0).toLocaleString()}</td><td style="padding:8px;text-align:right;font-weight:600;color:#DA4E24">${pct.toFixed(1)}%</td></tr>`
       }).join('')}</tbody>
     </table>`
 
@@ -151,11 +155,11 @@ function formatCapTable(data: Record<string, unknown>): string {
           <th style="text-align:right;padding:8px;color:#6B7280">Monto</th>
           <th style="text-align:left;padding:8px;color:#6B7280">Inversor</th>
         </tr></thead>
-        <tbody>${rounds.map(r => `<tr style="border-bottom:1px solid #F3F4F6"><td style="padding:8px;color:#111827;font-weight:500">${r.name}</td><td style="padding:8px">${S.status(r.type)}</td><td style="padding:8px;text-align:right;color:#111827">$${Number(r.preMoneyValuation || 0).toLocaleString()}</td><td style="padding:8px;text-align:right;color:#1F77F6;font-weight:600">$${Number(r.amountRaised || 0).toLocaleString()}</td><td style="padding:8px;color:#374151">${r.investorName || '—'}</td></tr>`).join('')}</tbody>
+        <tbody>${rounds.map(r => `<tr style="border-bottom:1px solid #F3F4F6"><td style="padding:8px;color:#111827;font-weight:500">${escapeHtml(r.name)}</td><td style="padding:8px">${S.status(r.type)}</td><td style="padding:8px;text-align:right;color:#111827">$${Number(r.preMoneyValuation || 0).toLocaleString()}</td><td style="padding:8px;text-align:right;color:#1F77F6;font-weight:600">$${Number(r.amountRaised || 0).toLocaleString()}</td><td style="padding:8px;color:#374151">${escapeHtml(r.investorName || '—')}</td></tr>`).join('')}</tbody>
       </table>`
   }
 
-  html += `<div style="${S.card};margin-top:12px"><div style="${S.label}">Option Pool</div><div style="${S.value};font-weight:600">${optionPool}%</div></div>`
+  html += `<div style="${S.card};margin-top:12px"><div style="${S.label}">Option Pool</div><div style="${S.value};font-weight:600">${escapeHtml(optionPool)}%</div></div>`
   return html
 }
 
@@ -173,8 +177,8 @@ function formatDataRoom(data: Record<string, unknown>): string {
     const total = docs.length
     const done = docs.filter(d => d.status === 'done' || d.status === 'listo').length
     return `
-      <div style="${S.sectionTitle}">${cat.label ?? cat.name ?? ''} <span style="font-size:0.75rem;color:#6B7280;font-weight:400">(${done}/${total})</span></div>
-      ${docs.map(d => `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:0.8125rem">${S.status(d.status ?? '')}<span style="color:#111827">${d.label ?? d.name ?? ''}</span>${d.priority ? `<span style="font-size:0.6875rem;color:#9CA3AF;margin-left:auto">Prioridad: ${d.priority}</span>` : ''}</div>`).join('')}
+      <div style="${S.sectionTitle}">${escapeHtml(cat.label ?? cat.name ?? '')} <span style="font-size:0.75rem;color:#6B7280;font-weight:400">(${done}/${total})</span></div>
+      ${docs.map(d => `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:0.8125rem">${S.status(d.status ?? '')}<span style="color:#111827">${escapeHtml(d.label ?? d.name ?? '')}</span>${d.priority ? `<span style="font-size:0.6875rem;color:#9CA3AF;margin-left:auto">Prioridad: ${escapeHtml(d.priority)}</span>` : ''}</div>`).join('')}
     `
   }).join('')
 }

@@ -5,6 +5,7 @@
  */
 
 import type { ToolDef } from './tools-data'
+import { escapeHtml } from './security/html'
 
 export interface ReportUser {
   name: string
@@ -14,14 +15,16 @@ export interface ReportUser {
 
 /**
  * Format raw report content (plain-text with simple markers) into styled HTML.
+ * The content is built from founder input, so it is HTML-escaped first and
+ * only the markup produced by the markers below is emitted.
  */
-function formatContent(raw: string): string {
-  return raw
+export function formatContent(raw: string): string {
+  return escapeHtml(raw)
     .replace(/^(={2,}.*$)/gm, '')
     .replace(/^(─{2,}.*$)/gm, '<hr/>')
     .replace(/^(---+)$/gm, '<hr/>')
     .replace(
-      /^([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\s&()\/\-—:,\.0-9]+):?\s*$/gm,
+      /^([A-ZÁÉÍÓÚÑ](?:[A-ZÁÉÍÓÚÑ\s()\/\-—:,\.0-9]|&amp;)+):?\s*$/gm,
       '<h2 class="section-title">$1</h2>'
     )
     .replace(/^(▶\s?)(.+)$/gm, '<h3 class="question">$2</h3>')
@@ -57,7 +60,7 @@ export function generateToolReport(
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Reporte: ${tool.name} — ${user.startup}</title>
+<title>Reporte: ${escapeHtml(tool.name)} — ${escapeHtml(user.startup)}</title>
 <style>
   @font-face { font-family: 'Mluvka'; font-weight: 200; font-style: normal; src: url('/mluvka/Mluvka-ExtraLight-BF65518ac7eb0fe.otf') format('opentype'); font-display: swap; }
   @font-face { font-family: 'Mluvka'; font-weight: 300; font-style: normal; src: url('/mluvka/Mluvka-Light-BF65518ac849790.otf') format('opentype'); font-display: swap; }
@@ -131,28 +134,28 @@ export function generateToolReport(
 <div class="page">
   <div class="header">
     <div class="logo">Startups4Climate</div>
-    <div class="badge">${tool.stageName} · ${tool.category}</div>
-    <h1>${tool.name}</h1>
-    <div class="subtitle">${tool.description}</div>
+    <div class="badge">${escapeHtml(tool.stageName)} · ${escapeHtml(tool.category)}</div>
+    <h1>${escapeHtml(tool.name)}</h1>
+    <div class="subtitle">${escapeHtml(tool.description)}</div>
     <div class="meta">
-      <span>${user.startup}</span>
-      <span>${user.name}</span>
-      <span>${dateStr}</span>
+      <span>${escapeHtml(user.startup)}</span>
+      <span>${escapeHtml(user.name)}</span>
+      <span>${escapeHtml(dateStr)}</span>
     </div>
   </div>
 
   <div class="info-bar no-print">
     <div class="info-card">
       <div class="label">Etapa</div>
-      <div class="value">${tool.stageName}</div>
+      <div class="value">${escapeHtml(tool.stageName)}</div>
     </div>
     <div class="info-card">
       <div class="label">Categoria</div>
-      <div class="value" style="font-size:0.875rem;color:#374151">${tool.category}</div>
+      <div class="value" style="font-size:0.875rem;color:#374151">${escapeHtml(tool.category)}</div>
     </div>
     <div class="info-card">
       <div class="label">Tiempo estimado</div>
-      <div class="value" style="font-size:0.875rem;color:#374151">${tool.estimatedTime}</div>
+      <div class="value" style="font-size:0.875rem;color:#374151">${escapeHtml(tool.estimatedTime)}</div>
     </div>
   </div>
 
@@ -166,7 +169,7 @@ export function generateToolReport(
     <p>Generado por Startups4Climate | startups4climate.org</p>
     <div class="actions">
       <button class="btn btn-primary" onclick="window.print()">Imprimir / Guardar PDF</button>
-      <a class="btn btn-secondary" href="mailto:${user.email}?subject=${encodeURIComponent('Reporte: ' + tool.name + ' — ' + user.startup)}&body=${encodeURIComponent('Adjunto el reporte de ' + tool.name + ' generado en Startups4Climate.\n\nPara ver el reporte completo, accede a la plataforma en startups4climate.org/tools/' + toolId)}">Enviar por email</a>
+      <a class="btn btn-secondary" href="mailto:${escapeHtml(user.email)}?subject=${escapeHtml(encodeURIComponent('Reporte: ' + tool.name + ' — ' + user.startup))}&amp;body=${escapeHtml(encodeURIComponent('Adjunto el reporte de ' + tool.name + ' generado en Startups4Climate.\n\nPara ver el reporte completo, accede a la plataforma en startups4climate.org/tools/' + toolId))}">Enviar por email</a>
     </div>
   </div>
 </div>

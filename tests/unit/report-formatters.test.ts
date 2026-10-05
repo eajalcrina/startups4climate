@@ -30,8 +30,9 @@ describe('formatToolData — fallback formatter', () => {
 
   it('serializes nested objects as JSON', () => {
     const html = formatToolData('unknown-tool', { list: ['x', 'y'] })
-    expect(html).toContain('"x"')
-    expect(html).toContain('"y"')
+    // JSON quotes are HTML-escaped; they render as "x" in the report
+    expect(html).toContain('&quot;x&quot;')
+    expect(html).toContain('&quot;y&quot;')
   })
 
   it('renders numbers and booleans', () => {
@@ -40,11 +41,9 @@ describe('formatToolData — fallback formatter', () => {
     expect(text(html)).toContain('flag false')
   })
 
-  // BUG: user-entered text is interpolated into the report HTML without
-  // escaping, and the report is opened with document.write() in a new window
-  // (src/lib/global-report.ts, src/lib/pdf-generator.ts). Any founder input
-  // containing markup is rendered/executed. Expected: HTML-escaped output.
-  it.fails('escapes HTML in user-provided values', () => {
+  // The report is opened with document.write() in a same-origin window, so
+  // founder input must never be emitted as markup.
+  it('escapes HTML in user-provided values', () => {
     const html = formatToolData('unknown-tool', { nota: '<img src=x onerror=alert(1)>' })
     expect(html).not.toContain('<img')
     expect(html).toContain('&lt;img')
