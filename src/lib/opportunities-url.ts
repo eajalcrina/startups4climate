@@ -60,12 +60,27 @@ const TRUSTED_DOMAINS: string[] = [
   'nxtpventures.com', 'cometa.com.co', 'omidyar.com',
 ]
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/**
+ * Keys match as whole words/phrases (Unicode-aware), so a short key like
+ * "caf" matches "CAF - Banco de Desarrollo" but not "Cafetaleros Unidos".
+ */
+const VERIFIED_PROGRAM_MATCHERS: Array<{ re: RegExp; url: string }> = Object.entries(VERIFIED_PROGRAM_URLS).map(
+  ([key, url]) => ({
+    re: new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegExp(key.normalize('NFC'))}(?![\\p{L}\\p{N}])`, 'u'),
+    url,
+  })
+)
+
 export function resolveOpportunityUrl(org: string, rawUrl: string): string {
-  const orgLower = org.toLowerCase()
+  const orgLower = org.normalize('NFC').toLowerCase()
 
   // 1. Program-specific verified URL
-  for (const [key, url] of Object.entries(VERIFIED_PROGRAM_URLS)) {
-    if (orgLower.includes(key)) return url
+  for (const { re, url } of VERIFIED_PROGRAM_MATCHERS) {
+    if (re.test(orgLower)) return url
   }
 
   // 2. AI-provided URL from a trusted domain — preserve it (may have a real program path)

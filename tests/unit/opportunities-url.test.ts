@@ -24,12 +24,28 @@ describe('resolveOpportunityUrl', () => {
       expect(resolveOpportunityUrl('ProInnóvate', 'x')).toBe('https://www.proinnovate.gob.pe/convocatorias')
     })
 
-    // Substring matching is greedy: short keys like "caf" or "fao" match inside
-    // unrelated org names. Documented here so a future change is deliberate.
-    it('short keys can match unrelated org names (substring semantics)', () => {
+    // Keys match whole words/phrases, not substrings: short keys like "caf" or
+    // "fao" must not match inside unrelated org names.
+    it('does not match short keys inside unrelated words', () => {
       expect(resolveOpportunityUrl('Cafetaleros Unidos', 'https://cafetaleros.org/convocatoria')).toBe(
+        'https://cafetaleros.org/',
+      )
+      expect(resolveOpportunityUrl('Faonia Labs', 'https://faonia.io/x')).toBe('https://faonia.io/')
+      expect(resolveOpportunityUrl('Gizmo Ventures', 'https://gizmo.vc/apply')).toBe('https://gizmo.vc/')
+    })
+
+    it('still matches short keys as whole words next to punctuation', () => {
+      expect(resolveOpportunityUrl('CAF - Banco de Desarrollo de América Latina', '')).toBe(
         'https://www.caf.com/en/currently/calls-for-proposals/',
       )
+      expect(resolveOpportunityUrl('Convocatoria FAO/ONU', '')).toBe('https://www.fao.org/grants-and-funding/en/')
+      expect(resolveOpportunityUrl('(GIZ) Alemania', '')).toBe('https://www.giz.de/en/ourservices/innovationlab.html')
+    })
+
+    it('matches multi-word keys only as a whole phrase', () => {
+      expect(resolveOpportunityUrl('Village Capital LatAm', '')).toBe('https://vilcap.com/programs')
+      expect(resolveOpportunityUrl('Climate LaunchPad 2026', '')).toBe('https://climatelaunchpad.com/apply/')
+      expect(resolveOpportunityUrl('Supercorfo', 'https://example.com/a')).toBe('https://example.com/')
     })
   })
 
