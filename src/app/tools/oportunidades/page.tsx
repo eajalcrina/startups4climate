@@ -2,17 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
-  ArrowLeft,
   Sparkles,
   Filter,
   Trophy,
   Banknote,
   GraduationCap,
   Rocket,
-  Globe,
   Clock,
   MapPin,
   ExternalLink,

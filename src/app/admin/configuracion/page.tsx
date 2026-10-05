@@ -215,11 +215,19 @@ export default function ConfiguracionPage() {
     setTimeout(() => setPwSuccess(false), 4000)
   }
 
+  // Reset loading/error when the org/demo context changes (adjusted during render)
+  const fetchKey = `${isDemo}|${appUser?.org_id ?? ''}`
+  const [prevFetchKey, setPrevFetchKey] = useState(fetchKey)
+  if (prevFetchKey !== fetchKey) {
+    setPrevFetchKey(fetchKey)
+    if (isDemo || appUser?.org_id) {
+      setLoading(true)
+      setError(null)
+    }
+  }
+
   useEffect(() => {
     if (!isDemo && !appUser?.org_id) return
-
-    setLoading(true)
-    setError(null)
 
     loadOrgProfile({ isDemo, orgId: appUser?.org_id })
       .then((profile) => {

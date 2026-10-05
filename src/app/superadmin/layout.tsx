@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 import {
   LayoutDashboard,
   LogOut,
@@ -39,20 +38,15 @@ export default function SuperadminLayout({ children }: { children: React.ReactNo
   const { appUser, loading, logout, isDemo } = useAuth()
   const pathname = usePathname()
   const router = useRouter()
-  const [orgLogo, setOrgLogo] = useState<string | null>(null)
-  const [orgName, setOrgName] = useState<string | null>(null)
+  const [fetchedOrgLogo, setOrgLogo] = useState<string | null>(null)
+  const [fetchedOrgName, setOrgName] = useState<string | null>(null)
+  // Demo / superadmin without org → MINPRO branding
+  const hasOrg = !isDemo && !!appUser?.org_id
+  const orgLogo = hasOrg ? fetchedOrgLogo : null
+  const orgName = hasOrg ? fetchedOrgName : 'Ministerio de la Producción'
 
   useEffect(() => {
-    // Demo / superadmin display info — MINPRO branding
-    if (isDemo) {
-      setOrgLogo(null)
-      setOrgName('Ministerio de la Producción')
-      return
-    }
-    if (!appUser?.org_id) {
-      setOrgName('Ministerio de la Producción')
-      return
-    }
+    if (isDemo || !appUser?.org_id) return
     supabase
       .from('organizations')
       .select('name, logo_url')
@@ -121,6 +115,7 @@ export default function SuperadminLayout({ children }: { children: React.ReactNo
         padding: '0 0.5rem', marginBottom: '1.25rem',
       }}>
         {orgLogo ? (
+          // eslint-disable-next-line @next/next/no-img-element -- org logo is an arbitrary admin-provided URL (no next/image remotePatterns)
           <img
             src={orgLogo}
             alt={orgName || 'Logo'}

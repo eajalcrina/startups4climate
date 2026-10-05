@@ -51,20 +51,26 @@ function AdminOrgDashboard() {
   })
   const [startups, setStartups] = useState<StartupRow[]>([])
   const [cohorts, setCohorts] = useState<CohortRow[]>([])
-  const [loading, setLoading] = useState(true)
+  // Real users without an org have nothing to load
+  const canLoad = isDemo || !!appUser?.org_id
+  const [loading, setLoading] = useState(canLoad)
   const [error, setError] = useState<string | null>(null)
   const [orgLogo, setOrgLogo] = useState<string | null>(null)
   const [orgName, setOrgName] = useState<string | null>(null)
 
+  // Reset loading/error whenever the auth context changes (adjusted during
+  // render, not in the effect). No org yet (real user) → nothing to load.
+  const [prevDeps, setPrevDeps] = useState({ appUser, isDemo })
+  if (prevDeps.appUser !== appUser || prevDeps.isDemo !== isDemo) {
+    setPrevDeps({ appUser, isDemo })
+    setLoading(canLoad)
+    if (canLoad) setError(null)
+  }
+
   useEffect(() => {
-    if (!isDemo && !appUser?.org_id) {
-      setLoading(false)
-      return
-    }
+    if (!canLoad) return
 
     let cancelled = false
-    setLoading(true)
-    setError(null)
 
     loadDashboard({ isDemo, orgId: appUser?.org_id })
       .then((data) => {
@@ -84,7 +90,7 @@ function AdminOrgDashboard() {
       })
 
     return () => { cancelled = true }
-  }, [appUser, isDemo])
+  }, [appUser, isDemo, canLoad])
 
   const METRIC_CARDS = [
     {
@@ -243,6 +249,7 @@ function AdminOrgDashboard() {
           }}
         >
           {orgLogo ? (
+            // eslint-disable-next-line @next/next/no-img-element -- org logo is an arbitrary admin-provided URL (no next/image remotePatterns)
             <img
               src={orgLogo}
               alt={orgName || ''}

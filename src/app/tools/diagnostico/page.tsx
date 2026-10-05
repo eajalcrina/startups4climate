@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { motion } from 'framer-motion'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Activity, TrendingUp, TrendingDown, Minus, Plus, ArrowRight, Calendar, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
@@ -43,22 +42,23 @@ function relDate(iso: string) {
 
 export default function DiagnosticoPage() {
   const { user, appUser } = useAuth()
-  const [history, setHistory] = useState<DiagnosticHistoryEntry[]>([])
-  const [loaded, setLoaded] = useState(false)
   const [view, setView] = useState<'history' | 'new'>('history')
 
   const userId = user?.id || appUser?.id || null
 
-  useEffect(() => {
-    if (!userId) { setLoaded(true); return }
+  // Re-read the local history whenever the view changes (e.g. after a new diagnostic)
+  const history = useMemo<DiagnosticHistoryEntry[]>(() => {
+    void view
+    if (!userId) return []
     try {
       const raw = localStorage.getItem(`s4c_${userId}_diagnostic_history`)
       const list: DiagnosticHistoryEntry[] = raw ? JSON.parse(raw) : []
       // Sort desc by created_at
       list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      setHistory(list)
-    } catch { /* noop */ }
-    setLoaded(true)
+      return list
+    } catch {
+      return []
+    }
   }, [userId, view])
 
   const latest = history[0]
@@ -204,11 +204,7 @@ export default function DiagnosticoPage() {
           </h3>
         </div>
 
-        {!loaded ? (
-          <div style={{ padding: '2rem', textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
-            Cargando…
-          </div>
-        ) : history.length === 0 ? (
+        {history.length === 0 ? (
           <div style={{ padding: '2.5rem 1.5rem', textAlign: 'center' }}>
             <Activity size={36} color="var(--color-text-muted)" style={{ marginBottom: 10 }} />
             <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-ink)', marginBottom: 4 }}>

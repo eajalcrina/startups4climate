@@ -2,7 +2,7 @@
  * Loader for /admin/reportes: cohort options + demo report history.
  */
 import { supabase } from '@/lib/supabase'
-import { DEMO_COHORTS, DEMO_ADMIN_REPORTS } from '@/lib/demo/admin-fixtures'
+import { DEMO_COHORTS } from '@/lib/demo/admin-fixtures'
 
 export interface CohortOption {
   id: string

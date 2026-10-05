@@ -15,7 +15,7 @@ export interface ReportUser {
 /**
  * Format raw report content (plain-text with simple markers) into styled HTML.
  */
-function formatContent(raw: string, stageColor: string): string {
+function formatContent(raw: string): string {
   return raw
     .replace(/^(={2,}.*$)/gm, '')
     .replace(/^(─{2,}.*$)/gm, '<hr/>')
@@ -156,7 +156,7 @@ export function generateToolReport(
     </div>
   </div>
 
-  <div class="content">${formatContent(content, stageColor)}</div>
+  <div class="content">${formatContent(content)}</div>
 
   <div class="disclaimer">
     Este reporte fue generado automáticamente basado en la información ingresada. Valida los datos con tu equipo y asesores antes de compartirlo con inversores o stakeholders.

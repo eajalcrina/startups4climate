@@ -61,6 +61,7 @@ export default function OrganizacionesPage() {
     }
 
     if (isDemo) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- demo fixtures applied once auth resolves; live path sets state after awaits
       setOrgs(
         DEMO_EXECUTOR_ORGS.map((o, i) => ({
           id: o.id,

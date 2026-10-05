@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Loader2, CheckCircle, XCircle, Building2, Calendar, Send, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
@@ -33,7 +33,6 @@ function formatDate(value: string | null): string | null {
 
 export default function CohortJoinPage() {
   const params = useParams()
-  const router = useRouter()
   const { user, openAuthModal } = useAuth()
   const token = params.token as string
 
@@ -41,7 +40,6 @@ export default function CohortJoinPage() {
   const [cohort, setCohort] = useState<CohortInfo | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [message, setMessage] = useState('')
-  const [submittedRequestId, setSubmittedRequestId] = useState<string | null>(null)
 
   // 1. Load cohort info via public RPC
   useEffect(() => {
@@ -111,7 +109,6 @@ export default function CohortJoinPage() {
       return
     }
 
-    setSubmittedRequestId(payload.request_id)
     setMode(payload.reused ? 'already_pending' : 'success')
   }
 

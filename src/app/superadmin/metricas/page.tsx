@@ -102,6 +102,7 @@ export default function MetricasPage() {
 
   useEffect(() => {
     if (isDemo) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- demo fixtures applied once auth resolves; live path sets state after awaits
       setTotalOrgs(8)
       setTotalFounders(187)
       setTotalStartups(DEMO_MINPRO_KPIS.startupsTotal)

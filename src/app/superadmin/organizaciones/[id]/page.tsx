@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
-  ArrowLeft, Building2, Users, GraduationCap, Loader2,
+  ArrowLeft, Users, GraduationCap, Loader2,
   Save, UserPlus, AlertTriangle, Check, X,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
@@ -184,6 +184,7 @@ export default function OrganizacionDetailPage() {
       router.replace('/admin')
       return
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount: the async loader only sets state after its awaits
     loadData()
   }, [appUser, router, loadData])
 

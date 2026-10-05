@@ -589,7 +589,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('s4c_diagnostic_pending')
       sessionStorage.removeItem('s4c_profile_checked')
     } catch { /* ignore */ }
-  }, [appUser])
+  }, [appUser, isDemo])
 
   const updateProfile = useCallback(
     async (updates: Partial<Pick<AppUser, 'full_name' | 'startup_name' | 'stage' | 'diagnosticScore' | 'gender'>>) => {

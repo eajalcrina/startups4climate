@@ -17,7 +17,10 @@ export function useToolState<T extends object>(
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const stateRef = useRef(state)
-  stateRef.current = state
+  // Keep the latest state for the debounced save and the unmount flush
+  useEffect(() => {
+    stateRef.current = state
+  }, [state])
 
   // Load from Supabase first, fallback to localStorage
   useEffect(() => {

@@ -22,7 +22,6 @@ import {
   getToolById,
   getTransversalPreambulo,
   STAGE_META,
-  TOOLS_BY_STAGE,
 } from '@/lib/tools-data'
 import { markToolCompleted, markReportGenerated, getProgress } from '@/lib/progress'
 import { generateToolReport } from '@/lib/pdf-generator'
@@ -83,7 +82,7 @@ export interface ToolComponentProps {
 
 export default function ToolPage({ toolId, transversalStage }: { toolId: string; transversalStage?: 0 | 1 | 2 | 3 | 4 }) {
   const { user } = useAuth()
-  const tool = getToolById(toolId)
+  const tool = useMemo(() => getToolById(toolId), [toolId])
 
   // For transversal tools viewed in a specific stage, use a stage-qualified storage key
   const isTransversalView = !!tool?.transversal && !!transversalStage
@@ -107,21 +106,6 @@ export default function ToolPage({ toolId, transversalStage }: { toolId: string;
   const displayStageBorder = isTransversalView
     ? STAGE_META[transversalStage].border
     : tool?.stageBorder
-
-  // Compute step X of Y within the current stage (for the top bar indicator)
-  const stageProgress = useMemo(() => {
-    if (!tool) return null
-    const stageKey: 0 | 1 | 2 | 3 | 4 = isTransversalView && transversalStage
-      ? transversalStage
-      : (tool.stage as 0 | 1 | 2 | 3 | 4)
-    const siblings = TOOLS_BY_STAGE[stageKey] ?? []
-    const total = siblings.length
-    // Find by id — when transversal, it may not belong to this stage list; fallback to stepNumber
-    const idx = siblings.findIndex((t) => t.id === tool.id)
-    const position = idx >= 0 ? idx + 1 : null
-    if (!position || total === 0) return null
-    return { position, total }
-  }, [tool, isTransversalView, transversalStage])
 
   const [preambOpen, setPreambOpen] = useState(true)
   const [completed, setCompleted] = useState(() => {

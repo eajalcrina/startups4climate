@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
   ArrowLeft, MapPin, Calendar, Building2, CheckCircle2, Circle,
-  Users, Leaf, Heart, TrendingUp, Briefcase, Rocket, Wrench,
+  Users, Leaf, Heart, TrendingUp, Briefcase,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import {

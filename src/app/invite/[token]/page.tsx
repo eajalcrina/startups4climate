@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Loader2, CheckCircle, XCircle, Mail } from 'lucide-react'
@@ -105,27 +105,10 @@ export default function InvitePage() {
     loadInvitation()
   }, [token])
 
-  // If user is already logged in, try to accept automatically
-  useEffect(() => {
-    if (!appUser || !invitation || mode !== 'check') return
-
-    if (appUser.email.toLowerCase() === invitation.email.toLowerCase()) {
-      acceptInvitation(appUser.id)
-    } else {
-      setMode('register')
-    }
-  }, [appUser, invitation])
-
-  // If invitation loaded and no user, show register form
-  useEffect(() => {
-    if (!loading && invitation && !appUser && mode === 'check') {
-      setMode('register')
-    }
-  }, [loading, invitation, appUser, mode])
-
   const isAdminOrgInvite = invitation?.invitation_type === 'admin_org'
 
-  async function acceptInvitation(_userId: string) {
+  // The RPC resolves the user from the session; no user id is needed here.
+  const acceptInvitation = useCallback(async () => {
     if (!invitation) return
     setMode('accepting')
 
@@ -143,7 +126,28 @@ export default function InvitePage() {
 
     setMode('done')
     setTimeout(() => router.push(isAdminOrgInvite ? '/admin' : '/tools'), 2000)
-  }
+  }, [invitation, token, router, isAdminOrgInvite])
+
+  // If user is already logged in, try to accept automatically
+  useEffect(() => {
+    if (!appUser || !invitation || mode !== 'check') return
+
+    if (appUser.email.toLowerCase() === invitation.email.toLowerCase()) {
+      acceptInvitation()
+    } else {
+      setMode('register')
+    }
+    // `mode` is only a guard: auto-accept must fire on auth/invitation changes, not on mode changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appUser, invitation])
+
+  // If invitation loaded and no user, show register form
+  useEffect(() => {
+    if (!loading && invitation && !appUser && mode === 'check') {
+      setMode('register')
+    }
+  }, [loading, invitation, appUser, mode])
+
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
@@ -178,7 +182,7 @@ export default function InvitePage() {
         if (startupErr) console.error('[S4C Sync] invite startup upsert failed:', startupErr)
       }
 
-      await acceptInvitation(user.id)
+      await acceptInvitation()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al registrarse.')
       setSubmitting(false)
@@ -197,7 +201,7 @@ export default function InvitePage() {
       await new Promise((r) => setTimeout(r, 1000))
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        await acceptInvitation(user.id)
+        await acceptInvitation()
       } else {
         setError('Error al iniciar sesión.')
         setSubmitting(false)

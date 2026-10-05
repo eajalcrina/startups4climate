@@ -48,20 +48,20 @@ const progressColor = (pct: number) => {
 
 const ACCENT = '#1F77F6'
 
+const krProgress = (kr: KeyResult) => {
+  if (kr.target === 0) return 0
+  return Math.min(Math.round((kr.current / kr.target) * 100), 100)
+}
+
+const objectiveScore = (obj: Objective) => {
+  if (obj.key_results.length === 0) return 0
+  const total = obj.key_results.reduce((sum, kr) => sum + krProgress(kr), 0)
+  return Math.round(total / obj.key_results.length)
+}
+
 export default function OKRTracker({ userId, onComplete, onGenerateReport }: ToolComponentProps) {
   const [data, setData] = useToolState<Data>(userId, 'okr-tracker', DEFAULT)
   const [saved, setSaved] = useState(false)
-
-  const krProgress = (kr: KeyResult) => {
-    if (kr.target === 0) return 0
-    return Math.min(Math.round((kr.current / kr.target) * 100), 100)
-  }
-
-  const objectiveScore = (obj: Objective) => {
-    if (obj.key_results.length === 0) return 0
-    const total = obj.key_results.reduce((sum, kr) => sum + krProgress(kr), 0)
-    return Math.round(total / obj.key_results.length)
-  }
 
   const overallScore = useMemo(() => {
     if (data.objectives.length === 0) return 0

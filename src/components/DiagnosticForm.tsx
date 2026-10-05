@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, ArrowRight, Loader2, CheckCircle2, Info, AlertTriangle, Sparkles, Target, Wrench, Mail, MessageCircle } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Loader2, CheckCircle2, Info, AlertTriangle, Mail, MessageCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
@@ -604,7 +604,7 @@ export default function DiagnosticForm({ embedded = false, userId = null, prefil
         adaptive_overrides: adaptiveOverrides,
       }))
     } catch { /* noop */ }
-  }, [step, answers, scores, tags, adaptiveOverrides, phoneCountryCode, comoNosConocio])
+  }, [embedded, step, answers, scores, tags, adaptiveOverrides, phoneCountryCode, comoNosConocio])
 
   /* ─── Submit contact form → Paso 1 ─── */
   const handleContactSubmit = (data: ContactData) => {

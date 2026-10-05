@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
-import { ChevronDown, ChevronRight, Save, CheckCircle2, FileText, Lightbulb, BookOpen } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { ChevronRight, CheckCircle2, BookOpen } from 'lucide-react'
 import { useSections } from '@/contexts/SectionsContext'
 
 /* ─── ToolSection: collapsible 3-state section ─── */
@@ -270,7 +270,7 @@ export function ToolActionBar({
   saved,                 // legacy alias
   disabled = false,
   completed: completedProp,  // legacy
-  accentColor: _accentColor, // ignored
+  // accentColor: legacy prop, intentionally ignored
 }: ToolActionBarProps) {
   // Resolve legacy → new API
   const resolvedReportHandler = onGenerateReport ?? onReport
@@ -509,15 +509,3 @@ export const btnSmall: React.CSSProperties = {
   transition: 'all 0.15s',
 }
 
-const btnBase: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.5rem',
-  padding: '0.75rem 1.25rem',
-  borderRadius: 10,
-  fontFamily: 'var(--font-body)',
-  fontSize: '0.875rem',
-  fontWeight: 600,
-  cursor: 'pointer',
-  transition: 'all 0.15s',
-}

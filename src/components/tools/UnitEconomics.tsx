@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 import { TrendingUp, TrendingDown } from 'lucide-react'
 import { useToolState } from '@/lib/useToolState'
 import type { ToolComponentProps } from './ToolPage'
-import { ToolSection, ToolActionBar, ToolProgress, inputStyle, labelStyle } from './shared'
+import { ToolSection, ToolActionBar, ToolProgress, labelStyle } from './shared'
 
 const DEFAULT_INPUTS: Record<string, string> = {
   revenuePerClient: '50000',

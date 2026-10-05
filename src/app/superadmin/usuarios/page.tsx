@@ -158,10 +158,18 @@ export default function UsuariosPage() {
     loadOrgs()
   }, [])
 
-  // Reload on filter change
-  useEffect(() => {
+  // Reset pagination/expansion when filters change (adjusted during render)
+  const filterKey = `${roleFilter}|${statusFilter}|${searchQuery}`
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+  if (prevFilterKey !== filterKey) {
+    setPrevFilterKey(filterKey)
     setPage(0)
     setExpandedId(null)
+  }
+
+  // Reload on filter change
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch: loader flips `loading` on, then sets results after its awaits
     loadUsers(0, true)
   }, [roleFilter, statusFilter, searchQuery, loadUsers])
 

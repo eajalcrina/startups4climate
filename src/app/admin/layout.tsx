@@ -16,7 +16,6 @@ import {
   ChevronLeft,
   Radar,
   Lightbulb,
-  Building2,
   Inbox,
 } from 'lucide-react'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
@@ -42,21 +41,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [orgLogo, setOrgLogo] = useState<string | null>(null)
-  const [orgName, setOrgName] = useState<string | null>(null)
+  const [fetchedOrgLogo, setOrgLogo] = useState<string | null>(null)
+  const [fetchedOrgName, setOrgName] = useState<string | null>(null)
+  // Demo org — hardcoded display info without hitting Supabase
+  const orgLogo = isDemo ? null : fetchedOrgLogo
+  const orgName = isDemo ? 'Universidad BioInnova' : fetchedOrgName
   const [pendingRequests, setPendingRequests] = useState<number>(0)
 
-  useEffect(() => {
+  // Close mobile sidebar on route change (state adjusted during render)
+  const [prevPathname, setPrevPathname] = useState(pathname)
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname)
     setMobileOpen(false)
-  }, [pathname])
+  }
 
   useEffect(() => {
-    // Demo org — hardcode display info without hitting Supabase
-    if (isDemo) {
-      setOrgLogo(null)
-      setOrgName('Universidad BioInnova')
-      return
-    }
+    if (isDemo) return
     if (!appUser?.org_id) return
     supabase.from('organizations').select('name, logo_url').eq('id', appUser.org_id).maybeSingle()
       .then(({ data }) => {
@@ -153,6 +153,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         padding: '0 0.5rem', marginBottom: '1.25rem',
       }}>
         {orgLogo ? (
+          // eslint-disable-next-line @next/next/no-img-element -- org logo is an arbitrary admin-provided URL (no next/image remotePatterns)
           <img
             src={orgLogo}
             alt={orgName || 'Logo'}

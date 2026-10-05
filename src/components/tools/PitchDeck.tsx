@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { useToolState } from '@/lib/useToolState'
 import type { ToolComponentProps } from './ToolPage'
 import { ToolSection, ToolActionBar, ToolProgress, textareaStyle, labelStyle } from './shared'

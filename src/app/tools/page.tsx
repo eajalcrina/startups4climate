@@ -17,9 +17,7 @@ import {
   Lightbulb,
   Filter,
   X,
-  Layers,
   Award,
-  FileText,
   Target,
   Sparkles,
   Calendar,
@@ -29,7 +27,6 @@ import { supabase } from '@/lib/supabase'
 import {
   Button,
   Card,
-  ProgressRing,
   SectionHeader,
   InsightBox,
   Chip,
@@ -296,21 +293,21 @@ function cohortProgressPct(start: string | null, end: string | null): number | n
 
 export default function ToolsDashboard() {
   const { user, appUser, isDemo } = useAuth()
-  const [progress, setProgress] = useState<ProgressMap>({})
+  // Bumped after Supabase hydration rewrites the local progress cache
+  const [progressVersion, setProgressVersion] = useState(0)
+  const progress = useMemo<ProgressMap>(() => {
+    void progressVersion
+    return user ? getProgress(user.id) : {}
+  }, [user, progressVersion])
   const [activeCategory, setActiveCategory] = useState<ToolCategory | 'Todos'>('Todos')
   const [demoBannerDismissed, setDemoBannerDismissed] = useState(false)
   const [activeCohort, setActiveCohort] = useState<ActiveCohort | null>(null)
 
   useEffect(() => {
-    if (user) {
-      setProgress(getProgress(user.id))
-      if (isDemo) return
-      hydrateProgressFromSupabase(user.id).then((changed) => {
-        if (changed) {
-          setProgress(getProgress(user.id))
-        }
-      })
-    }
+    if (!user || isDemo) return
+    hydrateProgressFromSupabase(user.id).then((changed) => {
+      if (changed) setProgressVersion((v) => v + 1)
+    })
   }, [user, isDemo])
 
   useEffect(() => {

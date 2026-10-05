@@ -6,7 +6,6 @@ import { motion } from 'framer-motion'
 import {
   Radio,
   Newspaper,
-  Target,
   TrendingUp,
   Scale,
   Lightbulb,

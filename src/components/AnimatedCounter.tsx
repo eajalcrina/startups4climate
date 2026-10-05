@@ -21,13 +21,12 @@ export default function AnimatedCounter({
   const ref = useRef<HTMLSpanElement>(null)
   const isInView = useInView(ref, { once: true })
   const prefersReducedMotion = useReducedMotion()
-  const [display, setDisplay] = useState(prefersReducedMotion ? value : 0)
+  const [animated, setAnimated] = useState(prefersReducedMotion ? value : 0)
+  // Outside the viewport (or with reduced motion) show the final value directly
+  const display = !isInView || prefersReducedMotion ? value : animated
 
   useEffect(() => {
-    if (!isInView || prefersReducedMotion) {
-      setDisplay(value)
-      return
-    }
+    if (!isInView || prefersReducedMotion) return
 
     const start = performance.now()
     const durationMs = duration * 1000
@@ -37,7 +36,7 @@ export default function AnimatedCounter({
       const progress = Math.min(elapsed / durationMs, 1)
       // easeOut curve
       const eased = 1 - Math.pow(1 - progress, 3)
-      setDisplay(Math.round(eased * value))
+      setAnimated(Math.round(eased * value))
       if (progress < 1) {
         requestAnimationFrame(tick)
       }

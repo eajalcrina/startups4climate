@@ -76,7 +76,7 @@ export default function Navbar() {
           }}
         >
           {/* Logo */}
-          <a
+          <Link
             href="/"
             onClick={(e) => {
               e.preventDefault()
@@ -97,7 +97,7 @@ export default function Navbar() {
             >
               Startups<span className="text-ember">4</span>Climate
             </span>
-          </a>
+          </Link>
 
           {/* Desktop Navigation */}
           <div

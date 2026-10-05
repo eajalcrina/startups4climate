@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ArrowRight, Eye, EyeOff, Lock, User, Building2, Mail } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -20,7 +20,11 @@ export default function AuthModal() {
   const [resetSent, setResetSent] = useState(false)
   const [form, setForm] = useState({ email: '', password: '', name: '', startup: '' })
 
-  useEffect(() => {
+  // Reset the form each time the modal opens (or its mode changes while open).
+  // State is adjusted during render instead of in an effect.
+  const [prevOpenState, setPrevOpenState] = useState({ authModalOpen, authModalMode })
+  if (prevOpenState.authModalOpen !== authModalOpen || prevOpenState.authModalMode !== authModalMode) {
+    setPrevOpenState({ authModalOpen, authModalMode })
     if (authModalOpen) {
       setMode(authModalMode)
       setError('')
@@ -28,7 +32,7 @@ export default function AuthModal() {
       setResetSent(false)
       setForm({ email: '', password: '', name: '', startup: '' })
     }
-  }, [authModalOpen, authModalMode])
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

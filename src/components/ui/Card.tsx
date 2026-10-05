@@ -52,6 +52,8 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
   (
     {
       variant = 'default',
+      // Pulled out so it is not forwarded to the DOM through ...rest
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       accent,
       hoverable = false,
       padding = 'md',

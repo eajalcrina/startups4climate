@@ -145,6 +145,7 @@ export default function PlataformaPage() {
 
   useEffect(() => {
     if (!isSuperadmin) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount: loading starts true (setLoading(true) is a no-op), the rest is set after awaits
     loadSettings()
   }, [isSuperadmin, loadSettings])
 

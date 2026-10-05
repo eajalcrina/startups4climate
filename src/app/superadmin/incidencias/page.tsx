@@ -153,6 +153,8 @@ const DEMO_TICKETS: DemoTicket[] = [
 
 export default function IncidenciasPage() {
   const { appUser, isDemo } = useAuth()
+  // Reference time for relative KPIs, captured once on mount (keeps render pure)
+  const [now] = useState(() => Date.now())
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -257,6 +259,7 @@ export default function IncidenciasPage() {
   useEffect(() => {
     if (!isSuperadmin) return
     if (isDemo) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- demo fixtures applied once auth resolves; the live path sets state after awaits
       loadDemoTickets()
       return
     }
@@ -425,7 +428,7 @@ export default function IncidenciasPage() {
     const breached = tickets.filter((t) => t.slaState === 'breach').length
     const resolved7d = tickets.filter((t) => {
       if (t.status !== 'resolved' && t.status !== 'closed') return false
-      const days = (Date.now() - new Date(t.created_at).getTime()) / (1000 * 60 * 60 * 24)
+      const days = (now - new Date(t.created_at).getTime()) / (1000 * 60 * 60 * 24)
       return days <= 7
     }).length
     return [
@@ -435,7 +438,7 @@ export default function IncidenciasPage() {
       { icon: CheckCircle2, label: 'Resueltas 7 d', value: resolved7d, color: '#16A34A' },
       { icon: Activity, label: 'MTTR', value: '5h 42m', color: '#8B5CF6' },
     ]
-  }, [tickets])
+  }, [tickets, now])
 
   if (!isSuperadmin) {
     return (

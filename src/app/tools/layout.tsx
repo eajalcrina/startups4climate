@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -315,8 +315,8 @@ function ToolsLayoutInner({ children }: { children: React.ReactNode }) {
   const stageParam = searchParams.get('stage')
   const currentSearchStage = stageParam ? parseInt(stageParam, 10) : null
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set())
-  const [profileIncomplete, setProfileIncomplete] = useState(false)
+  // Bumped after Supabase hydration rewrites the local progress cache
+  const [progressVersion, setProgressVersion] = useState(0)
   const [orgName, setOrgName] = useState<string | null>(null)
 
   // Scroll to top on route change
@@ -324,10 +324,12 @@ function ToolsLayoutInner({ children }: { children: React.ReactNode }) {
     window.scrollTo(0, 0)
   }, [pathname])
 
-  // Close mobile sidebar on route change
-  useEffect(() => {
+  // Close mobile sidebar on route change (state adjusted during render)
+  const [prevPathname, setPrevPathname] = useState(pathname)
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname)
     setMobileOpen(false)
-  }, [pathname])
+  }
 
   useEffect(() => {
     if (!loading && !user) {
@@ -351,19 +353,15 @@ function ToolsLayoutInner({ children }: { children: React.ReactNode }) {
     }
   }, [user, loading, pathname, router, isDemo])
 
-  useEffect(() => {
-    if (!user) return
+  const profileIncomplete = useMemo(() => {
+    if (!user) return false
     try {
       const extra = localStorage.getItem(`s4c_${user.id}_profile_extra`)
-      if (!extra || extra === '{}') {
-        setProfileIncomplete(true)
-      } else {
-        const parsed = JSON.parse(extra)
-        const missing = !parsed.vertical || !parsed.country || !parsed.role
-        setProfileIncomplete(missing)
-      }
+      if (!extra || extra === '{}') return true
+      const parsed = JSON.parse(extra)
+      return !parsed.vertical || !parsed.country || !parsed.role
     } catch {
-      setProfileIncomplete(true)
+      return true
     }
   }, [user])
 
@@ -381,19 +379,21 @@ function ToolsLayoutInner({ children }: { children: React.ReactNode }) {
     }
   }, [appUser?.org_id])
 
+  // Re-read the local progress cache on every route change and after hydration
+  const completedIds = useMemo(() => {
+    void progressVersion
+    void pathname
+    if (!user) return new Set<string>()
+    const progress = getProgress(user.id)
+    return new Set(Object.entries(progress).filter(([, v]) => v.completed).map(([k]) => k))
+  }, [user, pathname, progressVersion])
+
   useEffect(() => {
-    if (user) {
-      const progress = getProgress(user.id)
-      setCompletedIds(new Set(Object.entries(progress).filter(([, v]) => v.completed).map(([k]) => k)))
-      if (isDemo) return
-      // Hydrate from Supabase on first load
-      hydrateProgressFromSupabase(user.id).then((changed) => {
-        if (changed) {
-          const updated = getProgress(user.id)
-          setCompletedIds(new Set(Object.entries(updated).filter(([, v]) => v.completed).map(([k]) => k)))
-        }
-      })
-    }
+    if (!user || isDemo) return
+    // Hydrate from Supabase on first load
+    hydrateProgressFromSupabase(user.id).then((changed) => {
+      if (changed) setProgressVersion((v) => v + 1)
+    })
   }, [user, pathname, isDemo])
 
   if (loading || !user) {

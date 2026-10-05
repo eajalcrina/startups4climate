@@ -44,10 +44,17 @@ export default function BenchmarkingPage() {
   const [benchmarkData, setBenchmarkData] = useState<BenchmarkMetric[]>([])
   const [chartData, setChartData] = useState<{ name: string; tuOrg: number; promedio: number }[]>([])
 
+  // Show the spinner again when the org/demo context changes (adjusted during render)
+  const fetchKey = `${isDemo}|${appUser?.org_id ?? ''}`
+  const [prevFetchKey, setPrevFetchKey] = useState(fetchKey)
+  if (prevFetchKey !== fetchKey) {
+    setPrevFetchKey(fetchKey)
+    if (isDemo || appUser?.org_id) setLoading(true)
+  }
+
   useEffect(() => {
     if (!isDemo && !appUser?.org_id) return
 
-    setLoading(true)
     loadBenchmark({ isDemo, orgId: appUser?.org_id })
       .then((result) => {
         setBenchmarkData(result.metrics)

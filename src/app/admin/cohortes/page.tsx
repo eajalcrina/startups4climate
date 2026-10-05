@@ -36,13 +36,22 @@ export default function CohortesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Reset loading/error when the org/demo context changes (adjusted during render)
+  const fetchKey = `${isDemo}|${appUser?.org_id ?? ''}`
+  const [prevFetchKey, setPrevFetchKey] = useState(fetchKey)
+  if (prevFetchKey !== fetchKey) {
+    setPrevFetchKey(fetchKey)
+    if (isDemo || appUser?.org_id) {
+      setLoading(true)
+      setError(null)
+    }
+  }
+
   useEffect(() => {
     // Wait until auth has settled (real users need an org_id; demo users don't)
     if (!isDemo && !appUser?.org_id) return
 
     let cancelled = false
-    setLoading(true)
-    setError(null)
 
     loadCohorts({ isDemo, orgId: appUser?.org_id })
       .then((rows) => {

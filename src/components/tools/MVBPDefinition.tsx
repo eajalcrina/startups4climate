@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { useToolState } from '@/lib/useToolState'
 import type { ToolComponentProps } from './ToolPage'
-import { ToolSection, ToolActionBar, ToolProgress, inputStyle, textareaStyle, labelStyle, btnSmall } from './shared'
+import { ToolSection, ToolActionBar, ToolProgress, inputStyle, textareaStyle, btnSmall } from './shared'
 
 interface Data {
   nombre: string

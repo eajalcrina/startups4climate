@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useMemo, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
@@ -38,13 +38,6 @@ const LATAM_VERTICALS: Record<string, string> = {
   saas_enterprise: 'SaaS / Enterprise',
   social_impact: 'Impacto Social',
   other: 'Otro',
-}
-
-const STAGE_NAMES: Record<number, string> = {
-  1: 'Pre-incubacion',
-  2: 'Incubacion',
-  3: 'Aceleracion',
-  4: 'Escalamiento',
 }
 
 const COUNTRY_FLAGS: Record<string, string> = {
@@ -693,22 +686,33 @@ const PRINT_STYLE = `
 
 export default function PassportPage() {
   const { user } = useAuth()
-  const [passportData, setPassportData] = useState<PassportData | null>(null)
-  const [completedCount, setCompletedCount] = useState(0)
-  const [stageCertificates, setStageCertificates] = useState<number[]>([])
-  const [stageProgressList, setStageProgressList] = useState<StageProgress[]>([])
-  const [readinessScore, setReadinessScore] = useState(0)
-  const [scoreBreakdown, setScoreBreakdown] = useState({
-    diagnostic: 0,
-    tools: 0,
-    unitEcon: 0,
-    traction: 0,
-    team: 0,
-  })
   const printRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    if (!user) return
+  // Derived from the user's local profile/progress cache (recomputed when the user changes)
+  const {
+    passportData,
+    completedCount,
+    stageCertificates,
+    stageProgressList,
+    readinessScore,
+    scoreBreakdown,
+  } = useMemo(() => {
+    const r: {
+      passportData: PassportData | null
+      completedCount: number
+      stageCertificates: number[]
+      stageProgressList: StageProgress[]
+      readinessScore: number
+      scoreBreakdown: { diagnostic: number; tools: number; unitEcon: number; traction: number; team: number }
+    } = {
+      passportData: null,
+      completedCount: 0,
+      stageCertificates: [],
+      stageProgressList: [],
+      readinessScore: 0,
+      scoreBreakdown: { diagnostic: 0, tools: 0, unitEcon: 0, traction: 0, team: 0 },
+    }
+    if (!user) return r
 
     try {
       const extra = JSON.parse(
@@ -784,7 +788,7 @@ export default function PassportPage() {
           elevatorPitch: String(pitchData?.elevatorPitch || pitchData?.oneLiner || extra.elevatorPitch || ''),
         }
 
-        setPassportData(data)
+        r.passportData = data
 
         // ─── Compute Investment Readiness Score ───
         const diagScore = user.diagnosticScore ?? 0
@@ -823,16 +827,16 @@ export default function PassportPage() {
         const teamComponent = Math.round(teamScore * 0.15)
         const composite = diagComponent + toolsComponent + unitEconComponent + tractionComponent + teamComponent
 
-        setReadinessScore(Math.min(100, composite))
-        setScoreBreakdown({
+        r.readinessScore = Math.min(100, composite)
+        r.scoreBreakdown = {
           diagnostic: diagComponent,
           tools: toolsComponent,
           unitEcon: unitEconComponent,
           traction: tractionComponent,
           team: teamComponent,
-        })
+        }
 
-        setCompletedCount(completedTools.length)
+        r.completedCount = completedTools.length
       }
 
       // Stage progress
@@ -863,11 +867,12 @@ export default function PassportPage() {
         }
       }
 
-      setStageProgressList(stageList)
-      setStageCertificates(certs)
+      r.stageProgressList = stageList
+      r.stageCertificates = certs
     } catch {
       // ignore
     }
+    return r
   }, [user])
 
   const handlePrint = useCallback(() => {

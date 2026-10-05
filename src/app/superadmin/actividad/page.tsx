@@ -360,6 +360,8 @@ function getInitials(name: string): string {
 
 export default function ActividadPage() {
   const { appUser, isDemo } = useAuth()
+  // Reference time for relative KPIs, captured once on mount (keeps render pure)
+  const [now] = useState(() => Date.now())
   const [entries, setEntries] = useState<ActivityEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -461,6 +463,7 @@ export default function ActividadPage() {
   }, [eventFilter, dateFrom, dateTo])
 
   // Reload when filters change
+  /* eslint-disable react-hooks/set-state-in-effect -- (re)load on filter/auth change: demo fixtures or an async query whose state is set after awaits */
   useEffect(() => {
     if (!isSuperadmin) return
     if (isDemo) {
@@ -469,6 +472,7 @@ export default function ActividadPage() {
       loadEntries(0, false)
     }
   }, [isSuperadmin, isDemo, loadEntries, loadDemoEntries])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleLoadMore = () => {
     loadEntries(entries.length, true)
@@ -519,7 +523,6 @@ export default function ActividadPage() {
 
   // KPIs (demo data)
   const kpis = useMemo(() => {
-    const now = Date.now()
     const day = 24 * 60 * 60 * 1000
 
     const today = DEMO_ACTIVITY.filter((e) => now - new Date(e.created_at).getTime() < day).length
@@ -536,7 +539,7 @@ export default function ActividadPage() {
     ).length
 
     return { today, logins24h, adminActions7d, errors24h }
-  }, [])
+  }, [now])
 
   // Group entries by day
   const grouped = useMemo(() => {
