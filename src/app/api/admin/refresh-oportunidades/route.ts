@@ -1,13 +1,19 @@
 /**
  * POST /api/admin/refresh-oportunidades
- * Admin-triggered version of the opportunities cron.
- * Calls Gemini to generate/refresh curated opportunities and seeds Supabase.
- * Auth: admin_org or superadmin only.
+ * Manually triggered version of the opportunities cron.
+ * Calls the AI model to generate/refresh curated opportunities and seeds
+ * Supabase with the service-role key. The result is global (shared by every
+ * organization), so only superadmin can trigger it.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase-server'
 import { createClient } from '@supabase/supabase-js'
-import { resolveOpportunityUrl } from '@/lib/opportunities-url'
+import {
+  OPPORTUNITY_PROMPT_GUARD,
+  upsertOpportunities,
+  validateOpportunities,
+  type OpportunityValidationStats,
+} from '@/lib/opportunities-validate'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -21,20 +27,22 @@ function sanitizeJsonString(raw: string): string {
 }
 
 export async function POST(_request: NextRequest) {
-  // Auth: admin_org or superadmin
+  // Auth: superadmin only (global write with the service-role key)
   const supabase = await createSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
-  if (!profile || !['admin_org', 'superadmin'].includes(profile.role ?? '')) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (profile?.role !== 'superadmin') {
+    console.error('[S4C Admin] refresh-oportunidades denied for non-superadmin:', user.id, profile?.role ?? 'sin perfil')
+    return NextResponse.json({ error: 'Solo superadmin puede actualizar oportunidades' }, { status: 403 })
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   const apiKey = process.env.GEMINI_API_KEY
   if (!supabaseUrl || !serviceKey || !apiKey) {
+    console.error('[S4C Admin] refresh-oportunidades: server env missing')
     return NextResponse.json({ error: 'Server config error' }, { status: 500 })
   }
 
@@ -42,12 +50,17 @@ export async function POST(_request: NextRequest) {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 
-  const results = { inserted: 0, updated: 0, errors: [] as string[] }
+  const results: {
+    inserted: number
+    updated: number
+    errors: string[]
+    validation?: OpportunityValidationStats
+  } = { inserted: 0, updated: 0, errors: [] }
 
   const prompt = `Eres un investigador de oportunidades de financiamiento para startups de impacto en América Latina.
-Genera exactamente 10 oportunidades REALES y ACTUALES (2025-2026) para founders de startups de clima, agritech, fintech, healthtech y emprendimiento de impacto en LATAM.
+Genera hasta 10 oportunidades REALES y VIGENTES para founders de startups de clima, agritech, fintech, healthtech y emprendimiento de impacto en LATAM.
 
-Incluye: al menos 3 grants, 3 aceleradoras, 2 fondos de inversión, 1 competencia y 1 fellowship.
+Idealmente incluye: grants, aceleradoras, fondos de inversión, competencias y fellowships.
 
 Responde SOLO con un array JSON válido. Sin texto antes ni después.
 
@@ -63,13 +76,15 @@ Cada objeto debe tener exactamente estas propiedades:
   "eligible_countries": ["PE","CL","CO","MX","AR","BR"],
   "eligible_verticals": ["cleantech_climatech","agritech_foodtech","fintech","healthtech","other"],
   "eligible_stages": ["idea","pre_seed","seed","series_a","growth"],
-  "application_url": "URL de la página de convocatoria o aplicación del programa (no solo la homepage). Ejemplos reales: 'https://www.startupchile.org/programs/', 'https://bidlab.org/calls', 'https://www.proinnovate.gob.pe/convocatorias', 'https://www.techstars.com/accelerators'. Si no conoces la URL exacta del programa, usa la homepage de la organización.",
+  "application_url": "URL https de la página de convocatoria o aplicación del programa (no solo la homepage). Ejemplos reales: 'https://www.startupchile.org/programs/', 'https://bidlab.org/calls', 'https://www.proinnovate.gob.pe/convocatorias', 'https://www.techstars.com/accelerators'. Si no conoces la URL exacta del programa, usa la homepage de la organización.",
   "is_rolling": true o false,
-  "deadline": "YYYY-MM-DD" o null
+  "deadline": "YYYY-MM-DD" (fecha futura) o null
 }
 
 Organizaciones válidas: BID Lab, CORFO, Start-Up Chile, Innpulsa, Wayra, Seedstars, 500 Global, Endeavor, Proinnovate, CONCYTEC, CAF, FONTAGRO, GIZ, Green Climate Fund, ClimateLaunchpad, ClimateWorks, Village Capital, Techstars, Y Combinator, AWS Activate, Google for Startups, Acumen, Microsoft for Startups.
-Montos realistas. NO repitas organizaciones. Genera exactamente 10 objetos.`
+Montos realistas. NO repitas organizaciones. Genera como máximo 10 objetos.
+
+${OPPORTUNITY_PROMPT_GUARD}`
 
   try {
     const aiRes = await fetch(
@@ -82,7 +97,8 @@ Montos realistas. NO repitas organizaciones. Genera exactamente 10 objetos.`
           messages: [{ role: 'user', content: prompt }],
           max_tokens: 6000,
         }),
-        signal: AbortSignal.timeout(50000),
+        // Leaves ~15s of the 60s budget for URL validation + DB writes.
+        signal: AbortSignal.timeout(40000),
       }
     )
 
@@ -100,66 +116,23 @@ Montos realistas. NO repitas organizaciones. Genera exactamente 10 objetos.`
       return NextResponse.json(results, { status: 502 })
     }
 
-    const items = JSON.parse(sanitizeJsonString(jsonMatch[0])) as Array<{
-      title: string; organization: string; description: string; type: string
-      amount_min: number | null; amount_max: number | null; currency: string
-      eligible_countries: string[]; eligible_verticals: string[]
-      eligible_stages: string[]; application_url: string
-      is_rolling: boolean; deadline: string | null
-    }>
+    const items: unknown = JSON.parse(sanitizeJsonString(jsonMatch[0]))
 
-    const VALID_TYPES = ['grant', 'accelerator', 'competition', 'fund', 'fellowship']
-
-    for (const item of items) {
-      if (!item.title || !item.organization) continue
-      const itemType = VALID_TYPES.includes(item.type) ? item.type : 'grant'
-      const verifiedUrl = resolveOpportunityUrl(item.organization, item.application_url ?? '')
-
-      const { data: existing } = await adminDb
-        .from('opportunities')
-        .select('id')
-        .eq('title', item.title.slice(0, 500))
-        .eq('organization', item.organization)
-        .maybeSingle()
-
-      if (existing) {
-        const { error } = await adminDb.from('opportunities').update({
-          description: item.description?.slice(0, 1000),
-          type: itemType,
-          amount_min: item.amount_min,
-          amount_max: item.amount_max,
-          currency: item.currency || 'USD',
-          eligible_countries: item.eligible_countries || [],
-          eligible_verticals: item.eligible_verticals || [],
-          eligible_stages: item.eligible_stages || [],
-          application_url: verifiedUrl,
-          is_rolling: item.is_rolling ?? false,
-          deadline: item.deadline,
-          is_active: true,
-        }).eq('id', existing.id)
-        if (error) results.errors.push(`Update: ${error.message}`)
-        else results.updated++
-      } else {
-        const { error } = await adminDb.from('opportunities').insert({
-          title: item.title.slice(0, 500),
-          organization: item.organization,
-          description: item.description?.slice(0, 1000),
-          type: itemType,
-          amount_min: item.amount_min,
-          amount_max: item.amount_max,
-          currency: item.currency || 'USD',
-          eligible_countries: item.eligible_countries || [],
-          eligible_verticals: item.eligible_verticals || [],
-          eligible_stages: item.eligible_stages || [],
-          application_url: verifiedUrl,
-          is_rolling: item.is_rolling ?? false,
-          deadline: item.deadline,
-          is_active: true,
-        })
-        if (error) results.errors.push(`Insert: ${error.message}`)
-        else results.inserted++
-      }
+    // Drop anything we cannot verify (non-https / unreachable URL, past
+    // deadline) before it reaches the table.
+    const { valid, stats } = await validateOpportunities(items, 'grant')
+    results.validation = stats
+    if (stats.kept < stats.received) {
+      console.error(
+        `[S4C Admin] refresh-oportunidades dropped ${stats.received - stats.kept}/${stats.received} items:`,
+        JSON.stringify(stats)
+      )
     }
+
+    const written = await upsertOpportunities(adminDb, valid)
+    results.inserted = written.inserted
+    results.updated = written.updated
+    results.errors.push(...written.errors)
 
     // Deactivate expired deadlines
     await adminDb.from('opportunities')
@@ -172,6 +145,6 @@ Montos realistas. NO repitas organizaciones. Genera exactamente 10 objetos.`
     results.errors.push(`Error: ${err instanceof Error ? err.message : 'unknown'}`)
   }
 
-  console.log('[S4C OPORTUNIDADES REFRESH]', JSON.stringify(results))
+  console.log('[S4C Admin] refresh-oportunidades:', JSON.stringify(results))
   return NextResponse.json(results)
 }
