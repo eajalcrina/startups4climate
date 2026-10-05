@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Authentication and Routing', () => {
+test.describe('Authentication and Routing @demo', () => {
   test('Demo Founder can access dashboard and it redirects from root', async ({ page }) => {
     // Navigate to demo-tools which sets the cookie
     await page.goto('/demo-tools');

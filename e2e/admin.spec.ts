@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Admin Tools Tests', () => {
+test.describe('Admin Tools Tests @demo', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate via demo entry to establish an admin session cookie
     await page.goto('/demo-admin');
@@ -22,7 +22,7 @@ test.describe('Admin Tools Tests', () => {
   });
 });
 
-test.describe('Superadmin Tools Tests', () => {
+test.describe('Superadmin Tools Tests @demo', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate via demo entry to establish a superadmin session cookie
     await page.goto('/demo-superadmin');
