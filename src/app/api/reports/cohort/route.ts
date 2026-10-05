@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase-server'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 
 const STAGE_LABELS: Record<string, string> = {
   pre_incubation: 'Pre-incubación',
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
   })
 
   // Create Excel workbook
-  const wb = XLSX.utils.book_new()
+  const wb = new ExcelJS.Workbook()
 
   // Summary sheet
   const summaryData = [
@@ -143,15 +143,19 @@ export async function POST(request: NextRequest) {
     ['Total startups', rows.length.toString()],
     ['Generado el', new Date().toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' })],
   ]
-  const wsSummary = XLSX.utils.aoa_to_sheet(summaryData)
-  XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumen')
+  const wsSummary = wb.addWorksheet('Resumen')
+  wsSummary.addRows(summaryData)
 
-  // Data sheet
-  const wsData = XLSX.utils.json_to_sheet(rows)
-  XLSX.utils.book_append_sheet(wb, wsData, 'Startups')
+  // Data sheet (header row from the row keys, like json_to_sheet)
+  const wsData = wb.addWorksheet('Startups')
+  if (rows.length > 0) {
+    const headers = Object.keys(rows[0]) as (keyof (typeof rows)[number])[]
+    wsData.addRow(headers)
+    rows.forEach((r) => wsData.addRow(headers.map((h) => r[h])))
+  }
 
   // Convert to buffer
-  const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+  const buf = await wb.xlsx.writeBuffer()
 
   return new NextResponse(buf, {
     status: 200,
