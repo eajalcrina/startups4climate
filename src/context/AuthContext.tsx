@@ -17,6 +17,7 @@ import {
   DEMO_SUPERADMIN_USER,
   seedDemoFounderData,
 } from '@/lib/demo/founder-fixtures'
+import { DEMO_COOKIE, getActiveDemoRole, isDemoEnabled, parseDemoRole, type DemoRole } from '@/lib/security/demo'
 
 export interface AppUser {
   id: string
@@ -64,7 +65,8 @@ interface AuthContextType {
   authModalOpen: boolean
   authModalMode: 'login' | 'register'
   updateUserStage: (stage: AppUser['stage'], score: number) => void
-  enterDemoMode: (role: 'founder' | 'admin_org' | 'superadmin') => void
+  /** No-op unless demo mode is enabled (same gate as the proxy) and the role is valid. */
+  enterDemoMode: (role: DemoRole) => void
   refreshUser: () => Promise<void>
 }
 
@@ -192,11 +194,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Rehydrate demo session from cookie before hitting Supabase. Without this,
     // refreshing /tools or /admin in demo mode redirects back to / because
     // appUser is null during the Supabase round-trip.
+    // Same gate as src/proxy.ts: the cookie is honored only when demo mode is
+    // enabled (never in production unless NEXT_PUBLIC_DEMO_ENABLED=true) and
+    // it carries one of the known roles. Anything else is dropped.
     if (typeof document !== 'undefined') {
-      const demoCookie = document.cookie
+      const rawDemoCookie = document.cookie
         .split('; ')
-        .find((c) => c.startsWith('s4c_demo='))
-        ?.split('=')[1] as 'founder' | 'admin_org' | 'superadmin' | undefined
+        .find((c) => c.startsWith(`${DEMO_COOKIE}=`))
+        ?.split('=')[1]
+      const demoCookie = getActiveDemoRole(rawDemoCookie)
+      if (rawDemoCookie !== undefined && demoCookie === null) {
+        document.cookie = `${DEMO_COOKIE}=; path=/; max-age=0; SameSite=Lax`
+      }
       if (demoCookie === 'founder') {
         seedDemoFounderData()
         setAppUser({ ...DEMO_FOUNDER_USER })
@@ -537,7 +546,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ])
   }, [])
 
-  const enterDemoMode = useCallback((role: 'founder' | 'admin_org' | 'superadmin') => {
+  const enterDemoMode = useCallback((requestedRole: DemoRole) => {
+    // Same gate as the proxy and /api/demo/[role]: no demo session in
+    // production unless explicitly enabled, and only known roles.
+    const role = parseDemoRole(requestedRole)
+    if (!isDemoEnabled() || !role) {
+      return
+    }
     // Rehydrate demo user from fixtures (force re-render) and seed localStorage.
     setIsDemo(true)
     if (role === 'founder') {
@@ -551,7 +566,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false)
     // Set a cookie so middleware lets demo users through (24h lifetime).
     if (typeof document !== 'undefined') {
-      document.cookie = `s4c_demo=${role}; path=/; max-age=86400; SameSite=Lax`
+      document.cookie = `${DEMO_COOKIE}=${role}; path=/; max-age=86400; SameSite=Lax`
     }
   }, [])
 
@@ -565,7 +580,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (userId) localStorage.removeItem(`s4c_${userId}_tool_progress`)
       } catch { /* ignore */ }
       if (typeof document !== 'undefined') {
-        document.cookie = 's4c_demo=; path=/; max-age=0; SameSite=Lax'
+        document.cookie = `${DEMO_COOKIE}=; path=/; max-age=0; SameSite=Lax`
       }
       return
     }

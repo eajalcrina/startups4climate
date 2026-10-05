@@ -17,6 +17,7 @@
 
 import { useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import { isDemoEnabled } from '@/lib/security/demo'
 
 const DEMO_MAP = [
   { real: '/tools',      demo: '/demo-tools'      },
@@ -29,6 +30,9 @@ export default function DemoLinkRewriter() {
   const router = useRouter()
 
   useEffect(() => {
+    // Demo disabled (production without NEXT_PUBLIC_DEMO_ENABLED=true): the
+    // proxy already redirects /demo-* to /, so there is nothing to rewrite.
+    if (!isDemoEnabled()) return
     // Use window.location.pathname as ground truth — it always reflects the
     // actual browser URL even after middleware rewrites.
     const browserPath = window.location.pathname
